@@ -1,0 +1,27 @@
+{
+  "name": "@landing-friend/cli",
+  "version": "0.0.1",
+  "description": "",
+  "type": "module",
+  "main": "lib/CLI.js",
+  "bin": {
+    "landing-friend": "lib/CLI.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "scripts": {
+    "build": "rimraf lib tsconfig.build.tsbuildinfo && ttsc --build tsconfig.build.json"
+  },
+  "dependencies": {
+    "@landing-friend/core": "^0.0.1",
+    "graphql-zeus": "^5.2.3",
+    "inquirer": "^9.2.8",
+    "node-fetch": "^3.3.0",
+    "ws": "^8.11.0",
+    "yargs": "^17.6.0"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^9.0.3"
+  }
+}
