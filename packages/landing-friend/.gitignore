@@ -1,0 +1,8 @@
+.vscode
+.DS_STORE
+node_modules
+*.log*
+lib
+package-lock.json
+*.tsbuildinfo*
+.env
