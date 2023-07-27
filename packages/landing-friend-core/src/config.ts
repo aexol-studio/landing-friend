@@ -3,22 +3,26 @@ import { message } from "./console.js";
 
 type WildcardSettings = { priority?: number; exclude?: boolean };
 
+type SitemapSettings = {
+  locale?: {
+    defaultLocale: string;
+    localeWildcard: string;
+  };
+  settingsPerWildcard?: Record<string, WildcardSettings>;
+};
+
 export type ConfigFile = {
   domain: string;
   input: string;
   output: string;
-  sitemap?: {
-    localeWildcard?: string;
-    settingsPerWildcard?: Record<string, WildcardSettings>;
-    locales?: string[]
-  };
+  sitemap?: SitemapSettings;
   robots?: boolean;
 };
 
 export const GLOBAL_CONFIG_FILE: ConfigFile = {
   domain: "https://www.example.com",
   input: "./out/",
-  output: "./landing-friend/",
+  output: "./public/",
 };
 
 export const readConfig = (path: string): ConfigFile | undefined => {
@@ -71,16 +75,13 @@ export const checkConfigDirectories = async (config: ConfigFile) => {
   }
 };
 export const initConfig = async (values: ConfigFile = GLOBAL_CONFIG_FILE) => {
-  fs.writeFileSync(
-    "landing-friend-config.ts",
-    [
-      `import { ConfigFile } from "@landing-friend/core";`,
-      ``,
-      `export const GLOBAL_CONFIG_FILE: ConfigFile = ${JSON.stringify(
-        values,
-        null,
-        2
-      )}`,
-    ].join("\n")
-  );
+  const formattedConfig = `import { ConfigFile } from "@landing-friend/core";
+
+export const GLOBAL_CONFIG_FILE: ConfigFile = {
+  ${Object.entries(values)
+    .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
+    .join(",\n  ")}
+};`;
+
+  fs.writeFileSync("landing-friend-config.ts", formattedConfig);
 };

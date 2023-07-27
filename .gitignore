@@ -16,3 +16,6 @@ coverage
 landing/out
 .next/
 .env
+out
+landing-friend-config.ts
+public

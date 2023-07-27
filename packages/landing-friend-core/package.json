@@ -5,7 +5,7 @@
   "main": "lib/index.js",
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "build": "rimraf lib tsconfig.build.tsbuildinfo && ttsc --build tsconfig.build.json"

@@ -10,7 +10,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@types/node": "^18.11.2",
     "@types/ws": "^8.5.3",
@@ -29,5 +29,9 @@
   "workspaces": [
     "./packages/landing-friend-core",
     "./packages/landing-friend"
-  ]
+  ],
+  "dependencies": {
+    "cosmiconfig": "^8.2.0",
+    "iso-639-1": "^2.1.15"
+  }
 }

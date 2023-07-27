@@ -9,7 +9,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "scripts": {
     "build": "rimraf lib tsconfig.build.tsbuildinfo && ttsc --build tsconfig.build.json"
   },
