@@ -1,13 +1,16 @@
 import fs from "fs";
 import { message } from "./console.js";
+import { LanguageCode } from "iso-639-1";
 
 type WildcardSettings = { priority?: number; exclude?: boolean };
 
 type SitemapSettings = {
   locale?: {
-    defaultLocale: string;
+    defaultLocale: LanguageCode;
     localeWildcard: string;
   };
+  trailingSlash?: boolean;
+  sortBy?: "priority" | "alphabetically-asc" | "alphabetically-desc";
   settingsPerWildcard?: Record<string, WildcardSettings>;
 };
 
