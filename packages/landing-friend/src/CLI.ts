@@ -40,11 +40,16 @@ yargs(hideBin(process.argv))
         message("Config not found", "red");
         return;
       }
-      const { generateRobots, generateSitemap } = sitemapGenerator(config);
-      message("Generating sitemap.xml ...", "yellow");
-      await generateSitemap();
-      message("Generating robots.txt ...", "yellow");
-      await generateRobots();
+      try {
+        message("Generating sitemap...", "yellow");
+        sitemapGenerator(config).generateAll();
+        message("Sitemap generated", "green");
+      } catch (e: any) {
+        message(e.message, "red");
+        if (e.message === "There are locales in your project.") {
+        }
+        return;
+      }
     }
   )
   .help()

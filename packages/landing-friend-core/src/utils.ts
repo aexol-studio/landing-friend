@@ -1,28 +1,29 @@
 import fs from "fs";
 import path from "path";
 
-export const getHtmlFiles = (
-  base: string,
-  dir: string,
-  fileList = [] as string[]
-) => {
+export const getHtmlFiles = (base: string) => {
+  const allFiles = getDirectories(base);
+  const baseWithoutDot = base.replace(/\.\//g, "");
+  const cleanFiles = allFiles
+    .map((file) => {
+      const relativePath = file.replace(baseWithoutDot, "");
+      return relativePath.replace(/\\/g, "/");
+    })
+    .filter((file) => file.endsWith(".html") || !file.trim().includes(" "));
+
+  return cleanFiles.map((file) => file.replace(".html", ""));
+};
+
+const getDirectories = (dir: string, fileList = [] as string[]) => {
   const files = fs.readdirSync(dir);
   files.forEach((file: string) => {
     const filePath = path.join(dir, file);
     const isDirectory = fs.statSync(filePath).isDirectory();
 
     if (isDirectory) {
-      getHtmlFiles(base, filePath, fileList);
-    } else if (path.extname(filePath) === ".html") {
-      let realFile = filePath
-        .replace(/\\/g, "/")
-        .replace(base.replace("./", ""), "")
-        .replace(".html", "");
-      if (realFile.includes("/index")) {
-        realFile = realFile.replace("/index", "");
-      }
-      fileList.push(realFile);
-    }
+      fileList.push(filePath);
+      getDirectories(filePath, fileList);
+    } else fileList.push(filePath);
   });
 
   return fileList;
@@ -33,5 +34,6 @@ export const saveFile = (filePath: string, content: string) => {
   if (!fs.existsSync(directory)) {
     fs.mkdirSync(directory, { recursive: true });
   }
+
   fs.writeFileSync(filePath, content);
 };
