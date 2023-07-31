@@ -68,14 +68,19 @@ export const sitemapGenerator = (config: ConfigFile) => {
         if (!matchedSetting)
           return {
             link: `${domain}${rest}`,
-            priority: Math.max(0.1, 1 - (file.match(/\//g) || []).length * 0.1),
+            priority: Math.max(
+              0.1,
+              1 - (file.match(/\//g) || []).length * 0.1
+            ).toFixed(1),
           };
         if (matchedSetting.exclude) return null;
         return {
           link: `${domain}${rest}`,
           priority:
             matchedSetting.priority ||
-            Math.max(0.1, 1 - (file.match(/\//g) || []).length * 0.1),
+            Math.max(0.1, 1 - (file.match(/\//g) || []).length * 0.1).toFixed(
+              1
+            ),
         };
       })
       .filter((file): file is File => !!file);

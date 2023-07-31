@@ -22,6 +22,7 @@
     "yargs": "^17.6.0"
   },
   "devDependencies": {
-    "@types/inquirer": "^9.0.3"
+    "@types/inquirer": "^9.0.3",
+    "@types/node": "^20.4.5"
   }
 }

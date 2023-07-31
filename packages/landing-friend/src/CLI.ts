@@ -2,7 +2,12 @@
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 
-import { message, readConfig, sitemapGenerator } from "@landing-friend/core";
+import {
+  message,
+  readConfig,
+  sitemapGenerator,
+  websiteAnalyzer,
+} from "@landing-friend/core";
 
 import { configInit } from "./functions/configInit.js";
 
@@ -35,7 +40,7 @@ yargs(hideBin(process.argv))
       },
     },
     async () => {
-      const config = readConfig("landing-friend-config.ts");
+      const config = await readConfig("landing-friend-config.ts");
       if (!config) {
         message("Config not found", "red");
         return;
@@ -48,6 +53,30 @@ yargs(hideBin(process.argv))
         message(e.message, "red");
         if (e.message === "There are locales in your project.") {
         }
+        return;
+      }
+    }
+  )
+  .command(
+    "analyze",
+    "Analyze your landing page",
+    {
+      help: {
+        describe: `Analyze your landing page`,
+      },
+    },
+    async () => {
+      const config = await readConfig("landing-friend-config.ts");
+      if (!config) {
+        message("Config not found", "red");
+        return;
+      }
+      try {
+        message("Analyzing your landing page...", "yellow");
+        websiteAnalyzer(config).analyze();
+        message("Analyzed your landing page", "green");
+      } catch (e: any) {
+        message(e.message, "red");
         return;
       }
     }

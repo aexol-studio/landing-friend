@@ -20,8 +20,11 @@ export type ConfigFile = {
   output: string;
   sitemap?: SitemapSettings;
   robots?: boolean;
+  analyzer?: {
+    saveAs: "json" | "html";
+    tags: Record<string, { minLength: number; maxLength: number }>;
+  };
 };
-
 export const GLOBAL_CONFIG_FILE: ConfigFile = {
   domain: "https://www.example.com",
   input: "./out/",
@@ -36,7 +39,7 @@ export const readConfig = (path: string): ConfigFile | undefined => {
     );
     return undefined;
   }
-  const file = fs.readFileSync(path).toString("utf8") as unknown as string;
+  const file = fs.readFileSync(path).toString("utf8");
 
   const config = eval(
     `(${file

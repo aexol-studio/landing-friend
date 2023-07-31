@@ -7,7 +7,7 @@ import {
 import inquirer from "inquirer";
 
 export const configInit = async () => {
-  const config = readConfig("landing-friend-config.ts");
+  const config = await readConfig("landing-friend-config.ts");
   if (config) {
     message("Config already exists", "red");
     return;
