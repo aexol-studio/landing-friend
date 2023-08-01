@@ -1,6 +1,7 @@
 import fs from "fs";
 import { message } from "./console.js";
 import { LanguageCode } from "iso-639-1";
+import ts from "typescript";
 
 type WildcardSettings = { priority?: number; exclude?: boolean };
 
@@ -31,37 +32,47 @@ export const GLOBAL_CONFIG_FILE: ConfigFile = {
   output: "./public/",
 };
 
-export const readConfig = (path: string): ConfigFile | undefined => {
-  if (!fs.existsSync(path)) {
+export const readConfig = (filePath: string): ConfigFile | undefined => {
+  if (!fs.existsSync(filePath)) {
     message(
       "No config detected. Please create one using init command or create it manually",
       "red"
     );
     return undefined;
   }
-  const file = fs.readFileSync(path).toString("utf8");
 
-  const config = eval(
-    `(${file
+  try {
+    const configFileText = fs
+      .readFileSync(filePath, "utf8")
       .replace(`import { ConfigFile } from "@landing-friend/core";`, "")
       .replace("export const GLOBAL_CONFIG_FILE: ConfigFile = ", "")
-      .replace(";", "")})`
-  ) as ConfigFile;
+      .replace(";", "")
+      .trim();
 
-  const errors: string[] = [];
-  Object.keys(GLOBAL_CONFIG_FILE).forEach((key) => {
-    const v = config[key as keyof ConfigFile];
-    if (typeof v === "undefined" || v === null) {
-      errors.push(
-        `Invalid config file. Please include "${key}" in your config`
-      );
+    const config = ts.parseConfigFileTextToJson(filePath, configFileText)
+      .config as ConfigFile;
+
+    const errors: string[] = [];
+    Object.keys(GLOBAL_CONFIG_FILE).forEach((key) => {
+      const v = config[key as keyof ConfigFile];
+      if (typeof v === "undefined" || v === null) {
+        errors.push(
+          `Invalid config file. Please include "${key}" in your config`
+        );
+      }
+    });
+
+    if (errors.length > 0) {
+      message(errors.join("\n"), "red");
+      return undefined;
     }
-  });
-  if (errors.length > 0) {
-    message(errors.join("\n"), "red");
+
+    return config;
+  } catch (error) {
+    message("Error while reading or parsing the config file.", "red");
+    console.error(error);
     return undefined;
   }
-  return config;
 };
 
 export const checkConfigDirectories = async (config: ConfigFile) => {
