@@ -41,17 +41,14 @@ export const sitemapGenerator = (config: ConfigFile) => {
 
     const preparedFiles: File[] = allHtmlFiles
       .map((file) => {
+        console.log("file", file);
         const matchedSetting = settingPerWildcard.find((setting) => {
           const regexPattern = setting.pagePattern
-            .replace(/\//g, "\\/")
-            .replace(/\*/g, ".*");
-          const regexPatternWithoutSlash = regexPattern.replace(/\\\//g, "");
+            .replace("*/", "^/")
+            .replace("/*", "/$");
+
           try {
-            const regex = new RegExp("^" + regexPattern + "$");
-            const regexWithoutSlash = new RegExp(
-              "^" + regexPatternWithoutSlash + "$"
-            );
-            return file.match(regex) || file.match(regexWithoutSlash);
+            return file.match(regexPattern);
           } catch {
             return file.includes(setting.pagePattern);
           }
@@ -160,13 +157,13 @@ const localesSitemapGenerator = ({
   if (!locales.includes(defaultLocale))
     locales.push(defaultLocale.toLowerCase());
 
-  const classicSitemapFiles = files.filter(
-    (file) => !locales.some((locale) => file.link.includes(`/${locale}`))
-  );
-
   const pagesWithLocales = files.filter((file) => {
     return locales.some((locale) => file.link.includes(`/${locale}`));
   });
+
+  const classicSitemapFiles = files.filter(
+    (file) => !locales.some((locale) => file.link.includes(`/${locale}`))
+  );
 
   const preparedFiles = pagesWithLocales
     .map((page) => {
@@ -182,6 +179,7 @@ const localesSitemapGenerator = ({
       (file, index, self) =>
         index === self.findIndex((t) => t.link === file.link)
     );
+
   const newFiles = preparedFiles.reduce((acc, file) => {
     const split = file.link.split("/__locale__");
     if (split.length === 2) {

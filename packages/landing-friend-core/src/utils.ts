@@ -6,7 +6,9 @@ export const getHtmlFiles = (base: string) => {
   const baseWithoutDot = base.replace(/\.\//g, "");
   const cleanFiles = allFiles
     .map((file) => {
-      const relativePath = file.replace(baseWithoutDot, "");
+      const relativePath = file
+        .replace(baseWithoutDot, "")
+        .replace(/index/g, "");
       return relativePath.replace(/\\/g, "/");
     })
     .filter((file) => file.endsWith(".html") || !file.trim().includes(" "));
