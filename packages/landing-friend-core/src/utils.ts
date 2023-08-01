@@ -6,9 +6,7 @@ export const getHtmlFiles = (base: string) => {
   const baseWithoutDot = base.replace(/\.\//g, "");
   const cleanFiles = allFiles
     .map((file) => {
-      const relativePath = file
-        .replace(baseWithoutDot, "")
-        .replace(/index/g, "");
+      const relativePath = file.replace(baseWithoutDot, "");
       return relativePath.replace(/\\/g, "/");
     })
     .filter((file) => file.endsWith(".html") || !file.trim().includes(" "));
@@ -39,7 +37,6 @@ export const getDirectories = (dir: string, fileList = [] as string[]) => {
     const isDirectory = fs.statSync(filePath).isDirectory();
 
     if (isDirectory) {
-      fileList.push(filePath);
       getDirectories(filePath, fileList);
     } else fileList.push(filePath);
   });

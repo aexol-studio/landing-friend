@@ -41,12 +41,11 @@ export const sitemapGenerator = (config: ConfigFile) => {
 
     const preparedFiles: File[] = allHtmlFiles
       .map((file) => {
-        console.log("file", file);
         const matchedSetting = settingPerWildcard.find((setting) => {
           const regexPattern = setting.pagePattern
-            .replace("*/", "^/")
-            .replace("/*", "/$");
-
+            .replace(/\/$/g, "")
+            .replace("*/", "/")
+            .replace("/*", "/");
           try {
             return file.match(regexPattern);
           } catch {
@@ -54,13 +53,13 @@ export const sitemapGenerator = (config: ConfigFile) => {
           }
         });
 
+        const fileWithoutIndex = file.replace(/index/g, "").replace(/\/$/g, "");
+
         const rest = sitemap?.trailingSlash
-          ? file.endsWith("/")
-            ? file
-            : file + "/"
-          : file.endsWith("/")
-          ? file.slice(0, -1)
-          : file;
+          ? fileWithoutIndex.endsWith("/")
+            ? fileWithoutIndex
+            : fileWithoutIndex + "/"
+          : fileWithoutIndex;
 
         if (!matchedSetting)
           return {
@@ -240,10 +239,18 @@ const localeSeoGenerator = (
   localeSitemapFiles: Array<Record<string, LocaleFile>>,
   defaultLocale: string
 ) => {
+  const classicWithoutLocales: File[] = classicSitemapFiles.filter(
+    (classic) =>
+      !localeSitemapFiles.some(
+        (locale) => classic.link === Object.keys(locale)[0]
+      )
+  );
+
   const data = localeSitemapFiles.map((page) => {
     const key = Object.keys(page)[0];
     const links = page[key].links;
     const priority = page[key].priority;
+
     return `
     <url>
       <loc>${key}</loc>${links
@@ -260,7 +267,9 @@ const localeSeoGenerator = (
       <priority>${priority}</priority>
     </url>`;
   });
-  return data.join("").concat(classicSeoFragmentGenerator(classicSitemapFiles));
+  return data
+    .join("")
+    .concat(classicSeoFragmentGenerator(classicWithoutLocales));
 };
 
 const classicSeoFragmentGenerator = (preparedFiles: File[]) => {
