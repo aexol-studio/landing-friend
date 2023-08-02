@@ -45,7 +45,7 @@ export const sitemapGenerator = (config: ConfigFile) => {
         const matchedSetting = settingPerWildcard.find((setting) => {
           const regexPattern = setting.pagePattern
             .replace(/\/$/g, "$")
-            .replace(/^\//g, "^")
+            .replace(/^\//g, "^/")
             .replace("*/", "/")
             .replace("/*", "/");
 
@@ -251,7 +251,10 @@ const localeSeoGenerator = (
       );
     })
     .map((classic) => {
-      return { link: classic.link, priority: classic.priority - 0.1 };
+      return {
+        link: classic.link,
+        priority: parseFloat((classic.priority - 0.1).toFixed(1)),
+      };
     });
 
   const data = localeSitemapFiles.map((page) => {
