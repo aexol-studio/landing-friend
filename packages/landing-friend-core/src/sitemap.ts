@@ -41,19 +41,16 @@ export const sitemapGenerator = (config: ConfigFile) => {
 
     const preparedFiles: File[] = allHtmlFiles
       .map((file) => {
+        const fileWithoutIndex = file.replace(/^index/g, "");
         const matchedSetting = settingPerWildcard.find((setting) => {
           const regexPattern = setting.pagePattern
-            .replace(/\/$/g, "")
+            .replace(/\/$/g, "$")
+            .replace(/^\//g, "^")
             .replace("*/", "/")
             .replace("/*", "/");
-          try {
-            return file.match(regexPattern);
-          } catch {
-            return file.includes(setting.pagePattern);
-          }
-        });
 
-        const fileWithoutIndex = file.replace(/index/g, "").replace(/\/$/g, "");
+          return fileWithoutIndex.match(new RegExp(regexPattern, "g"));
+        });
 
         const rest = sitemap?.trailingSlash
           ? fileWithoutIndex.endsWith("/")
@@ -61,23 +58,31 @@ export const sitemapGenerator = (config: ConfigFile) => {
             : fileWithoutIndex + "/"
           : fileWithoutIndex;
 
-        if (!matchedSetting)
+        const priority = Math.max(
+          0.1,
+          1 -
+            (fileWithoutIndex.replace(/\/$|^\//g, "").match(/\//g) || [])
+              .length *
+              0.1
+        );
+
+        if (matchedSetting) {
+          if (matchedSetting.exclude) {
+            return null;
+          } else {
+            if (matchedSetting.priority) {
+              return {
+                link: `${domain}${rest}`,
+                priority: matchedSetting.priority,
+              };
+            }
+          }
+        } else {
           return {
             link: `${domain}${rest}`,
-            priority: Math.max(
-              0.1,
-              1 - (file.match(/\//g) || []).length * 0.1
-            ).toFixed(1),
+            priority: parseFloat(priority.toFixed(1)),
           };
-        if (matchedSetting.exclude) return null;
-        return {
-          link: `${domain}${rest}`,
-          priority:
-            matchedSetting.priority ||
-            Math.max(0.1, 1 - (file.match(/\//g) || []).length * 0.1).toFixed(
-              1
-            ),
-        };
+        }
       })
       .filter((file): file is File => !!file);
 
