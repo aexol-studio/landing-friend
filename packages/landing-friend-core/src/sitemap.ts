@@ -1,6 +1,6 @@
 import { ConfigFile } from "./config.js";
 import { messageWithContent } from "./console.js";
-import { getHtmlFiles, saveFile } from "./utils.js";
+import { getHtmlFiles, saveFile, saveOldSitemap } from "./utils.js";
 import ISO from "iso-639-1";
 
 type File = {
@@ -83,23 +83,6 @@ export const sitemapGenerator = (config: ConfigFile) => {
             priority: parseFloat(priority.toFixed(1)),
           };
         }
-        // if (matchedSetting) {
-        //   if (matchedSetting.exclude) {
-        //     return null;
-        //   } else {
-        //     if (matchedSetting.priority) {
-        //       return {
-        //         link: `${domain}${rest}`,
-        //         priority: matchedSetting.priority,
-        //       };
-        //     }
-        //   }
-        // } else {
-        //   return {
-        //     link: `${domain}${rest}`,
-        //     priority: parseFloat(priority.toFixed(1)),
-        //   };
-        // }
       })
       .filter((file): file is File => !!file);
 
@@ -128,6 +111,7 @@ export const sitemapGenerator = (config: ConfigFile) => {
       sitemapXML = classicSitemapGenerator({ files });
     }
 
+    saveOldSitemap(`${output}/sitemap.xml`);
     saveFile(`${output}/sitemap.xml`, sitemapXML);
   };
 

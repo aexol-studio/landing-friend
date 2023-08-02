@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { message } from "./console.js";
 
 export const getHtmlFiles = (base: string) => {
   const allFiles = getDirectories(base);
@@ -55,4 +56,12 @@ export const saveFile = (filePath: string, content: string) => {
   }
 
   fs.writeFileSync(filePath, content);
+};
+
+export const saveOldSitemap = (filePath: string) => {
+  if (fs.existsSync(filePath)) {
+    const oldFilePath = filePath.replace(/\.xml$/, "Old.xml");
+    message(`Old sitemap detected. Moved to ${oldFilePath}`, "green");
+    fs.copyFileSync(filePath, oldFilePath);
+  }
 };
