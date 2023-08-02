@@ -45,14 +45,12 @@ export const sitemapGenerator = (config: ConfigFile) => {
         const matchedSetting = settingPerWildcard.find((setting) => {
           const regexPattern = setting.pagePattern
             .replace(/\/$/g, "$")
-            .replace(/^\//g, "^/")
+            .replace(/^\//g, `^\/`)
             .replace("*/", "/")
             .replace("/*", "/");
 
           return fileWithoutIndex.match(new RegExp(regexPattern, "g"));
         });
-
-        console.log(fileWithoutIndex);
 
         const rest = sitemap?.trailingSlash
           ? fileWithoutIndex + "/"
