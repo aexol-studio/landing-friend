@@ -41,7 +41,7 @@ export const sitemapGenerator = (config: ConfigFile) => {
 
     const preparedFiles: File[] = allHtmlFiles
       .map((file) => {
-        const fileWithoutIndex = file.replace(/^index/g, "");
+        const fileWithoutIndex = file.replace(/index/g, "").replace(/\/$/g, "");
         const matchedSetting = settingPerWildcard.find((setting) => {
           const regexPattern = setting.pagePattern
             .replace(/\/$/g, "$")
@@ -52,10 +52,10 @@ export const sitemapGenerator = (config: ConfigFile) => {
           return fileWithoutIndex.match(new RegExp(regexPattern, "g"));
         });
 
+        console.log(fileWithoutIndex);
+
         const rest = sitemap?.trailingSlash
-          ? fileWithoutIndex.endsWith("/")
-            ? fileWithoutIndex
-            : fileWithoutIndex + "/"
+          ? fileWithoutIndex + "/"
           : fileWithoutIndex;
 
         const priority = Math.max(
@@ -244,12 +244,15 @@ const localeSeoGenerator = (
   localeSitemapFiles: Array<Record<string, LocaleFile>>,
   defaultLocale: string
 ) => {
-  const classicWithoutLocales: File[] = classicSitemapFiles.filter(
-    (classic) =>
-      !localeSitemapFiles.some(
+  const classicWithoutLocales: File[] = classicSitemapFiles
+    .filter((classic) => {
+      return !localeSitemapFiles.some(
         (locale) => classic.link === Object.keys(locale)[0]
-      )
-  );
+      );
+    })
+    .map((classic) => {
+      return { link: classic.link, priority: classic.priority - 0.1 };
+    });
 
   const data = localeSitemapFiles.map((page) => {
     const key = Object.keys(page)[0];
