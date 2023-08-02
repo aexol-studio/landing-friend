@@ -6,6 +6,7 @@ import ISO from "iso-639-1";
 type File = {
   link: string;
   priority: number;
+  customPriority?: boolean;
 };
 
 type LocaleFile = {
@@ -68,12 +69,13 @@ export const sitemapGenerator = (config: ConfigFile) => {
           if (matchedSetting.exclude) {
             return null;
           } else {
-            if (matchedSetting.priority) {
-              return {
-                link: `${domain}${rest}`,
-                priority: matchedSetting.priority,
-              };
-            }
+            return {
+              link: `${domain}${rest}`,
+              priority: matchedSetting.priority
+                ? matchedSetting.priority
+                : parseFloat(priority.toFixed(1)),
+              customPriority: !!matchedSetting.priority,
+            };
           }
         } else {
           return {
@@ -81,6 +83,23 @@ export const sitemapGenerator = (config: ConfigFile) => {
             priority: parseFloat(priority.toFixed(1)),
           };
         }
+        // if (matchedSetting) {
+        //   if (matchedSetting.exclude) {
+        //     return null;
+        //   } else {
+        //     if (matchedSetting.priority) {
+        //       return {
+        //         link: `${domain}${rest}`,
+        //         priority: matchedSetting.priority,
+        //       };
+        //     }
+        //   }
+        // } else {
+        //   return {
+        //     link: `${domain}${rest}`,
+        //     priority: parseFloat(priority.toFixed(1)),
+        //   };
+        // }
       })
       .filter((file): file is File => !!file);
 
@@ -115,10 +134,19 @@ export const sitemapGenerator = (config: ConfigFile) => {
   const generateRobots = () => {
     const excludedPages = settingPerWildcard
       .filter((setting) => setting.exclude)
-      .map((page) => `Disallow: /${page}`)
+      .filter((filter) => filter.pagePattern.match(/\//g))
+      .map((page) => {
+        let pattern = page.pagePattern;
+
+        if (!pattern.startsWith("/") && !pattern.startsWith("*/")) {
+          pattern = "/" + pattern;
+        }
+
+        return `Disallow: ${pattern}`;
+      })
       .join("\n");
 
-    const robotsTXT = `Sitemap: ${domain}/sitemap.xml\n\nUser-agent: *${excludedPages}`;
+    const robotsTXT = `Sitemap: ${domain}/sitemap.xml\n\nUser-agent: *\n${excludedPages}`;
 
     saveFile(`${output}/robots.txt`, robotsTXT);
   };
@@ -251,7 +279,9 @@ const localeSeoGenerator = (
     .map((classic) => {
       return {
         link: classic.link,
-        priority: parseFloat((classic.priority - 0.1).toFixed(1)),
+        priority: classic.customPriority
+          ? classic.priority
+          : parseFloat((classic.priority - 0.1).toFixed(1)),
       };
     });
 
