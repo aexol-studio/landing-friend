@@ -9,20 +9,39 @@ type Tags = { minLength: number; maxLength: number };
 type TagsWithReason = Tags & { reason: string };
 
 export const websiteAnalyzer = (config: ConfigFile) => {
-  const { input, output } = config;
+  const { input, output, sitemap } = config;
   const tags = config.analyzer?.tags || {};
   const analyze = async () => {
     const allFiles = getFilesToAnalyze(input);
     let tagsStatus: Record<string, Record<string, TagsStatus>> = {};
     let tagsPatterns: Record<string, Record<string, TagsWithReason>> = {};
 
+    const settingPerWildcard = Object.entries(
+      sitemap?.settingsPerWildcard || {}
+    ).map(([pagePattern, settings]) => ({
+      pagePattern,
+      ...settings,
+    }));
+
     allFiles.forEach((file) => {
-      checkFiles({
-        file,
-        tags,
-        tagsStatus,
-        tagsPatterns,
+      const matchedSetting = settingPerWildcard.find((setting) => {
+        const regexPattern = setting.pagePattern
+          .replace(/\/$/g, ".html$")
+          .replace(/^\//g, `^\/`)
+          .replace("*/", "/")
+          .replace("/*", "/");
+
+        return file.match(new RegExp(regexPattern, "g"));
       });
+
+      if (!matchedSetting) {
+        checkFiles({
+          file,
+          tags,
+          tagsStatus,
+          tagsPatterns,
+        });
+      }
     });
 
     const htmlWithTablesAndCharts = prepareHTMLWithTables({
