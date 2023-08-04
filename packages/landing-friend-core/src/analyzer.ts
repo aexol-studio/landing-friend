@@ -1,16 +1,15 @@
 import path from "path";
-import { ConfigFile } from "./config.js";
+import { ConfigFile, TagsProps } from "./config.js";
 import { getFilesToAnalyze, readFile, saveFile } from "./utils.js";
 import open, { apps } from "open";
 import { message } from "./console.js";
 
-type TagsProps = Record<string, TagsRange>;
 type TagsPatterns = Record<string, Record<string, TagsWithReason>>;
 
 type TagsRange = {
   minLength?: number;
   maxLength?: number;
-  keywords?: string;
+  content?: string;
 };
 type TagsWithReason = TagsRange & {
   requirement: string;
@@ -22,7 +21,12 @@ const staticTags = ["strong", "em", "span"];
 
 export const websiteAnalyzer = (config: ConfigFile) => {
   const { input, output, sitemap, analyzer } = config;
-  const tags = analyzer?.tags || {};
+  if (!analyzer) {
+    return {
+      analyze: async () => message("Define analyzer in config", "redBright"),
+    };
+  }
+  const tags = analyzer.tags;
   const analyze = async () => {
     const allFiles = getFilesToAnalyze(input);
     let tagsPatterns: TagsPatterns = {};
@@ -83,6 +87,11 @@ export const websiteAnalyzer = (config: ConfigFile) => {
       } catch {
         message("Cannot open browser. Please open file manually", "yellow");
         return;
+      } finally {
+        message(
+          `Your website has been analyzed, JSON and html files have been generated in ${config.output}`,
+          "green"
+        );
       }
     }
   };
@@ -162,7 +171,7 @@ const checkFileByPatterns = ({
               ...value,
               requirement: `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
               count: text.length,
-              keywords: text,
+              content: text,
               multipleTags: false,
             },
           });
@@ -215,7 +224,7 @@ const generateTableRows = (tagsPatterns: TagsPatterns) => {
                     }">${value.count}</strong></td><td width="20%">${
                       value.requirement
                     }</td>`
-                : `<td>List of <strong>${tag}</strong>: <strong>${value.keywords}</strong></td><td></td>`
+                : `<td>List of <strong>${tag}</strong>: <strong>${value.content}</strong></td><td></td>`
               : `<td>Length of <strong>${tag}</strong>: <strong style="color: red">No characters detected</strong></td><td width="20%"><strong style="color: red">${value.requirement}</strong></td>`
           }
       `;

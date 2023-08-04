@@ -15,6 +15,31 @@ type SitemapSettings = {
   settingsPerWildcard?: Record<string, WildcardSettings>;
 };
 
+export type TagsProps =
+  | {
+      h1: {
+        minLength: number;
+        maxLength: number;
+      };
+    }
+  | {
+      title: {
+        minLength: number;
+        maxLength: number;
+      };
+    }
+  | {
+      description: {
+        minLength: number;
+        maxLength: number;
+      };
+    }
+  | {
+      keywords: {
+        countKeywords: boolean;
+      };
+    };
+
 export type ConfigFile = {
   domain: string;
   input: string;
@@ -22,10 +47,7 @@ export type ConfigFile = {
   sitemap?: SitemapSettings;
   robots?: boolean;
   analyzer?: {
-    tags: Record<
-      string,
-      { minLength?: number; maxLength?: number; content?: boolean }
-    >;
+    tags: TagsProps;
   };
 };
 export const GLOBAL_CONFIG_FILE: ConfigFile = {

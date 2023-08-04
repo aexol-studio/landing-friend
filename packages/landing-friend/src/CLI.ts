@@ -72,9 +72,8 @@ yargs(hideBin(process.argv))
         return;
       }
       try {
-        message("Analyzing your landing page...", "yellow");
+        message("Analyzing your page...", "yellow");
         websiteAnalyzer(config).analyze();
-        message("Analyzed your landing page", "green");
       } catch (e: any) {
         message(e.message, "red");
         return;
