@@ -22,7 +22,6 @@ export type ConfigFile = {
   sitemap?: SitemapSettings;
   robots?: boolean;
   analyzer?: {
-    saveAs: "json" | "html";
     tags: Record<
       string,
       { minLength?: number; maxLength?: number; content?: boolean }

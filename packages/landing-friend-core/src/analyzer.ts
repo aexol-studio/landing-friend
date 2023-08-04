@@ -5,21 +5,18 @@ import open, { apps } from "open";
 import { message } from "./console.js";
 
 type TagsProps = Record<string, TagsRange>;
-type TagsStatusProps = Record<string, Record<string, TagsStatus>>;
 type TagsPatterns = Record<string, Record<string, TagsWithReason>>;
 
-type TagsStatus = {
-  h1: boolean;
-  title: boolean;
-  description: boolean;
-  keywords: boolean;
-};
 type TagsRange = {
   minLength?: number;
   maxLength?: number;
   keywords?: string;
 };
-type TagsWithReason = TagsRange & { reason: string; count: number };
+type TagsWithReason = TagsRange & {
+  requirement: string;
+  count: number;
+  multipleTags?: boolean;
+};
 
 const staticTags = ["strong", "em", "span"];
 
@@ -28,7 +25,6 @@ export const websiteAnalyzer = (config: ConfigFile) => {
   const tags = analyzer?.tags || {};
   const analyze = async () => {
     const allFiles = getFilesToAnalyze(input);
-    let tagsStatus: TagsStatusProps = {};
     let tagsPatterns: TagsPatterns = {};
 
     const settingPerWildcard = Object.entries(
@@ -53,21 +49,32 @@ export const websiteAnalyzer = (config: ConfigFile) => {
         checkFiles({
           file,
           tags,
-          tagsStatus,
           tagsPatterns,
         });
       }
     });
 
     const htmlWithTablesAndCharts = prepareHTMLWithTables({
-      tagsStatus,
       tagsPatterns,
     });
 
-    if (analyzer?.saveAs === "json") {
-      const JSONData = { tagsStatus, tagsPatterns };
-      saveFile(`${output}/seo-analyze.json`, JSON.stringify(JSONData, null, 2));
-    } else {
+    if (analyzer) {
+      const cleanedTagsPatterns: TagsPatterns = {};
+      Object.entries(tagsPatterns).forEach(([file, tagData]) => {
+        cleanedTagsPatterns[file] = {};
+        Object.entries(tagData).forEach(([tag, value]) => {
+          cleanedTagsPatterns[file][tag] = {
+            ...value,
+            requirement: value.requirement.replace(/<\/?strong>/g, ""),
+          };
+        });
+      });
+
+      saveFile(
+        `${output}/seo-analyze.json`,
+        JSON.stringify(cleanedTagsPatterns, null, 2)
+      );
+
       saveFile(`${output}/seo-analyze.html`, htmlWithTablesAndCharts);
       try {
         await open(path.join(process.cwd(), output, `seo-analyze.html`), {
@@ -85,40 +92,14 @@ export const websiteAnalyzer = (config: ConfigFile) => {
 const checkFiles = ({
   file,
   tags,
-  tagsStatus,
   tagsPatterns,
 }: {
   file: string;
   tags: TagsProps;
-  tagsStatus: TagsStatusProps;
   tagsPatterns: TagsPatterns;
 }) => {
   const fileContent = readFile(file);
-  checkTagsStatus({ file, fileContent, tags, tagsStatus });
   checkFileByPatterns({ file, fileContent, tags, tagsPatterns });
-};
-
-const checkTagsStatus = ({
-  file,
-  fileContent,
-  tags,
-  tagsStatus,
-}: {
-  file: string;
-  fileContent: string;
-  tags: TagsProps;
-  tagsStatus: TagsStatusProps;
-}) => {
-  Object.entries(tags).forEach(([tag]) => {
-    const regex = new RegExp(`<${tag}.*?>(.*?)</${tag}>`, "g");
-    const matches = fileContent.match(regex);
-    return Object.assign(tagsStatus, {
-      [file]: {
-        ...tagsStatus[file],
-        [tag]: !!matches,
-      },
-    });
-  });
 };
 
 const checkFileByPatterns = ({
@@ -142,46 +123,73 @@ const checkFileByPatterns = ({
       : (regex = new RegExp(`<${tag}.*?>(.*?)</${tag}>`, "g"));
 
     const matches = fileContent.match(regex);
+
     if (matches) {
-      matches.forEach((match) => {
-        let text: string;
-
-        tag === "description"
-          ? (text = match
-              .replace(/<meta name="description" content="/g, "")
-              .replace(/\"$/g, ""))
-          : tag === "keywords"
-          ? (text = match
-              .replace(/<meta property="keywords" content="/g, "")
-              .replace(/\"$/g, ""))
-          : (text = match
-              .replace(new RegExp(`^<${tag}.*?>`, "g"), "")
-              .replace(new RegExp(`</${tag}>$`, "g"), ""));
-
-        staticTags.forEach((staticTag) => {
-          const regex = new RegExp(`<${staticTag}>|<\/${staticTag}>`, "g");
-          text = text.replace(regex, "");
-        });
-
+      if (matches.length > 1) {
         return (tagsPatterns[file] = {
           ...tagsPatterns[file],
           [tag]: {
             ...value,
-            reason: `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
-            count: text.length,
-            keywords: text,
+            requirement: `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
+            count: matches.length,
+            multipleTags: true,
           },
         });
-      });
+      } else {
+        matches.forEach((match) => {
+          let text: string;
+
+          tag === "description"
+            ? (text = match
+                .replace(/<meta name="description" content="/g, "")
+                .replace(/\"$/g, ""))
+            : tag === "keywords"
+            ? (text = match
+                .replace(/<meta property="keywords" content="/g, "")
+                .replace(/\"$/g, ""))
+            : (text = match
+                .replace(new RegExp(`^<${tag}.*?>`, "g"), "")
+                .replace(new RegExp(`</${tag}>$`, "g"), ""));
+
+          staticTags.forEach((staticTag) => {
+            const regex = new RegExp(`<${staticTag}>|<\/${staticTag}>`, "g");
+            text = text.replace(regex, "");
+          });
+
+          return (tagsPatterns[file] = {
+            ...tagsPatterns[file],
+            [tag]: {
+              ...value,
+              requirement: `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
+              count: text.length,
+              keywords: text,
+              multipleTags: false,
+            },
+          });
+        });
+      }
     } else {
-      return (tagsPatterns[file] = {
-        ...tagsPatterns[file],
-        [tag]: {
-          ...value,
-          reason: `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
-          count: NaN,
-        },
-      });
+      if (tag !== "keywords") {
+        return (tagsPatterns[file] = {
+          ...tagsPatterns[file],
+          [tag]: {
+            ...value,
+            requirement: `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
+            count: NaN,
+            multipleTags: false,
+          },
+        });
+      } else {
+        return (tagsPatterns[file] = {
+          ...tagsPatterns[file],
+          [tag]: {
+            ...value,
+            requirement: `At least one keyword required`,
+            count: NaN,
+            multipleTags: false,
+          },
+        });
+      }
     }
   });
 };
@@ -197,25 +205,23 @@ const generateTableRows = (tagsPatterns: TagsPatterns) => {
           ${
             !isNaN(value.count)
               ? value.maxLength && value.minLength
-                ? `<td>Length of <strong>${tag}</strong>: <strong style="${
-                    value.minLength <= value.count &&
-                    value.count >= value.maxLength
-                      ? "color: red"
-                      : "color: black"
-                  }">${value.count}</strong></td>`
-                : `<td>List of <strong>${tag}</strong>: <strong>${value.keywords}</strong></td>`
-              : `<td>Length of <strong>${tag}</strong>: <strong style="color: red">No characters detected</strong></td>`
+                ? value.multipleTags
+                  ? `<td><strong style="color: red">Warning! Number of ${tag} on the page: ${value.count}</strong></td><td width="20%"><strong style="color: red">Check the code</strong></td>`
+                  : `<td>Length of <strong>${tag}</strong>: <strong style="${
+                      value.minLength >= value.count &&
+                      value.count >= value.maxLength
+                        ? "color: red"
+                        : "color: black"
+                    }">${value.count}</strong></td><td width="20%">${
+                      value.requirement
+                    }</td>`
+                : `<td>List of <strong>${tag}</strong>: <strong>${value.keywords}</strong></td><td></td>`
+              : `<td>Length of <strong>${tag}</strong>: <strong style="color: red">No characters detected</strong></td><td width="20%"><strong style="color: red">${value.requirement}</strong></td>`
           }
-        ${
-          tag !== "keywords"
-            ? `  <td width="20%">${value.reason}</td>`
-            : ` <td width="20%"></td>`
-        }
-          </tr>
-          </tbody>
       `;
         })
         .join("");
+
       return `<thead>
       <tr>
       <th colspan="2">${file}</th>
@@ -228,35 +234,9 @@ const generateTableRows = (tagsPatterns: TagsPatterns) => {
     .join("");
 };
 
-const generateWithoutTagsTable = (tagsStatus: TagsStatusProps) => {
-  return Object.entries(tagsStatus)
-    .map(([file, tags]) => {
-      return `<div class="tag-container">
-          <h4>${file}</h4>
-          <div class="tag-row">
-            <div class="tag-label">h1:</div>
-            <div class="tag-value">${tags.h1 ? "✅" : "❌"}</div>
-          </div>
-          <div class="tag-row">
-            <div class="tag-label">title:</div>
-            <div class="tag-value">${tags.title ? "✅" : "❌"}</div>
-          </div>
-          <div class="tag-row">
-            <div class="tag-label">description:</div>
-            <div class="tag-value">${tags.description ? "✅" : "❌"}</div>
-          </div>
-        </div>`;
-    })
-    .join("");
-};
-
-const prepareHTMLWithTables = (data: {
-  tagsPatterns: TagsPatterns;
-  tagsStatus: TagsStatusProps;
-}) => {
-  const { tagsPatterns, tagsStatus } = data;
+const prepareHTMLWithTables = (data: { tagsPatterns: TagsPatterns }) => {
+  const { tagsPatterns } = data;
   const brokenTagsTable = generateTableRows(tagsPatterns);
-  const withoutTagsTable = generateWithoutTagsTable(tagsStatus);
 
   return `<!DOCTYPE html>
 <html>
@@ -276,12 +256,6 @@ const prepareHTMLWithTables = (data: {
       h4 {
         word-break: break-word;
         margin-bottom: 12px;
-      }
-      .flex-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 20px;
-        justify-content: center;
       }
       table {
         border-collapse: collapse;
@@ -351,14 +325,10 @@ const prepareHTMLWithTables = (data: {
     </style>
   </head>
   <body>
-    <h1>Tags Range</h1>
+    <h1>Report</h1>
     <table>
       ${brokenTagsTable}
     </table>
-    <h1>Without tags</h1>
-    <div class="flex-container">
-      ${withoutTagsTable}
-    </div>
   </body>
 </html>`;
 };
