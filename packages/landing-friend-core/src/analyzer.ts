@@ -149,16 +149,19 @@ const checkFileByPatterns = ({
           let text: string;
 
           tag === "description"
-            ? (text = match
-                .replace(/<meta name="description" content="/g, "")
-                .replace(/\"$/g, ""))
+            ? (text = match.replace(
+                /<meta name="description" content="|\"$/g,
+                ""
+              ))
             : tag === "keywords"
-            ? (text = match
-                .replace(/<meta property="keywords" content="/g, "")
-                .replace(/\"$/g, ""))
-            : (text = match
-                .replace(new RegExp(`^<${tag}.*?>`, "g"), "")
-                .replace(new RegExp(`</${tag}>$`, "g"), ""));
+            ? (text = match.replace(
+                /<meta property="keywords" content="|\"$/g,
+                ""
+              ))
+            : (text = match.replace(
+                new RegExp(`^<${tag}.*?>|</${tag}>$`, "g"),
+                ""
+              ));
 
           staticTags.forEach((staticTag) => {
             const regex = new RegExp(`<${staticTag}>|<\/${staticTag}>`, "g");
@@ -217,13 +220,18 @@ const generateTableRows = (tagsPatterns: TagsPatterns) => {
                 ? value.multipleTags
                   ? `<td><strong style="color: red">Warning! Number of ${tag} on the page: ${value.count}</strong></td><td width="20%"><strong style="color: red">Check the code</strong></td>`
                   : `<td>Length of <strong>${tag}</strong>: <strong style="${
-                      value.minLength >= value.count &&
-                      value.count >= value.maxLength
-                        ? "color: red"
-                        : "color: black"
-                    }">${value.count}</strong></td><td width="20%">${
-                      value.requirement
-                    }</td>`
+                      value.count >= value.minLength &&
+                      value.count <= value.maxLength
+                        ? "color: black"
+                        : "color: red"
+                    }">${
+                      value.count
+                    }</strong></td><td width="20%"><strong style="${
+                      value.count >= value.minLength &&
+                      value.count <= value.maxLength
+                        ? "color: black"
+                        : "color: red"
+                    }">${value.requirement}</strong></td>`
                 : `<td>List of <strong>${tag}</strong>: <strong>${value.content}</strong></td><td></td>`
               : `<td>Length of <strong>${tag}</strong>: <strong style="color: red">No characters detected</strong></td><td width="20%"><strong style="color: red">${value.requirement}</strong></td>`
           }
@@ -233,7 +241,9 @@ const generateTableRows = (tagsPatterns: TagsPatterns) => {
 
       return `<thead>
       <tr>
-      <th colspan="2">${file}</th>
+      <th colspan="2">${file
+        .replace(`${process.cwd()}/out/`, "")
+        .replace(".html", "")}</th>
       </tr>
       </thead>
       ${rows}
