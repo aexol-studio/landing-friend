@@ -8,13 +8,20 @@ type TagsProps = Record<string, TagsRange>;
 type TagsStatusProps = Record<string, Record<string, TagsStatus>>;
 type TagsPatterns = Record<string, Record<string, TagsWithReason>>;
 
-type TagsStatus = { h1: boolean; title: boolean; description: boolean };
+type TagsStatus = {
+  h1: boolean;
+  title: boolean;
+  description: boolean;
+  keywords: boolean;
+};
 type TagsRange = {
   minLength?: number;
   maxLength?: number;
-  keywords?: string[];
+  keywords?: string;
 };
 type TagsWithReason = TagsRange & { reason: string; count: number };
+
+const staticTags = ["strong", "em", "span"];
 
 export const websiteAnalyzer = (config: ConfigFile) => {
   const { input, output, sitemap, analyzer } = config;
@@ -128,29 +135,41 @@ const checkFileByPatterns = ({
   Object.entries(tags).forEach(([tag, value]) => {
     let regex: RegExp;
 
-    if (tag === "description") {
-      regex = new RegExp(`<meta name="description" content="(.*?)"`, "g");
-    } else {
-      regex = new RegExp(`<${tag}.*?>(.*?)</${tag}>`, "g");
-    }
+    tag === "description"
+      ? (regex = new RegExp(`<meta name="description" content="(.*?)"`, "g"))
+      : tag === "keywords"
+      ? (regex = new RegExp(`<meta property="keywords" content="(.*?)"`, "g"))
+      : (regex = new RegExp(`<${tag}.*?>(.*?)</${tag}>`, "g"));
 
     const matches = fileContent.match(regex);
     if (matches) {
       matches.forEach((match) => {
         let text: string;
-        if (tag === "description") {
-          text = match
-            .replace(/<meta name="description" content="/g, "")
-            .replace(/\"$/g, "");
-        } else {
-          text = match.replace(`<${tag}>`, "").replace(`</${tag}>`, "");
-        }
+
+        tag === "description"
+          ? (text = match
+              .replace(/<meta name="description" content="/g, "")
+              .replace(/\"$/g, ""))
+          : tag === "keywords"
+          ? (text = match
+              .replace(/<meta property="keywords" content="/g, "")
+              .replace(/\"$/g, ""))
+          : (text = match
+              .replace(new RegExp(`^<${tag}.*?>`, "g"), "")
+              .replace(new RegExp(`</${tag}>$`, "g"), ""));
+
+        staticTags.forEach((staticTag) => {
+          const regex = new RegExp(`<${staticTag}>|<\/${staticTag}>`, "g");
+          text = text.replace(regex, "");
+        });
+
         return (tagsPatterns[file] = {
           ...tagsPatterns[file],
           [tag]: {
             ...value,
             reason: `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
             count: text.length,
+            keywords: text,
           },
         });
       });

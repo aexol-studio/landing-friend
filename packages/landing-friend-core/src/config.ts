@@ -23,7 +23,10 @@ export type ConfigFile = {
   robots?: boolean;
   analyzer?: {
     saveAs: "json" | "html";
-    tags: Record<string, { minLength: number; maxLength: number }>;
+    tags: Record<
+      string,
+      { minLength?: number; maxLength?: number; content?: boolean }
+    >;
   };
 };
 export const GLOBAL_CONFIG_FILE: ConfigFile = {
