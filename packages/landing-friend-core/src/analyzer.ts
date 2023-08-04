@@ -4,17 +4,25 @@ import { getFilesToAnalyze, readFile, saveFile } from "./utils.js";
 import open, { apps } from "open";
 import { message } from "./console.js";
 
+type TagsProps = Record<string, TagsRange>;
+type TagsStatusProps = Record<string, Record<string, TagsStatus>>;
+type TagsPatterns = Record<string, Record<string, TagsWithReason>>;
+
 type TagsStatus = { h1: boolean; title: boolean; description: boolean };
-type Tags = { minLength: number; maxLength: number };
-type TagsWithReason = Tags & { reason: string };
+type TagsRange = {
+  minLength?: number;
+  maxLength?: number;
+  keywords?: string[];
+};
+type TagsWithReason = TagsRange & { reason: string; count: number };
 
 export const websiteAnalyzer = (config: ConfigFile) => {
-  const { input, output, sitemap } = config;
-  const tags = config.analyzer?.tags || {};
+  const { input, output, sitemap, analyzer } = config;
+  const tags = analyzer?.tags || {};
   const analyze = async () => {
     const allFiles = getFilesToAnalyze(input);
-    let tagsStatus: Record<string, Record<string, TagsStatus>> = {};
-    let tagsPatterns: Record<string, Record<string, TagsWithReason>> = {};
+    let tagsStatus: TagsStatusProps = {};
+    let tagsPatterns: TagsPatterns = {};
 
     const settingPerWildcard = Object.entries(
       sitemap?.settingsPerWildcard || {}
@@ -49,7 +57,7 @@ export const websiteAnalyzer = (config: ConfigFile) => {
       tagsPatterns,
     });
 
-    if (config.analyzer?.saveAs === "json") {
+    if (analyzer?.saveAs === "json") {
       const JSONData = { tagsStatus, tagsPatterns };
       saveFile(`${output}/seo-analyze.json`, JSON.stringify(JSONData, null, 2));
     } else {
@@ -74,9 +82,9 @@ const checkFiles = ({
   tagsPatterns,
 }: {
   file: string;
-  tags: Record<string, Tags>;
-  tagsStatus: Record<string, Record<string, TagsStatus>>;
-  tagsPatterns: Record<string, Record<string, TagsWithReason>>;
+  tags: TagsProps;
+  tagsStatus: TagsStatusProps;
+  tagsPatterns: TagsPatterns;
 }) => {
   const fileContent = readFile(file);
   checkTagsStatus({ file, fileContent, tags, tagsStatus });
@@ -91,8 +99,8 @@ const checkTagsStatus = ({
 }: {
   file: string;
   fileContent: string;
-  tags: Record<string, Tags>;
-  tagsStatus: Record<string, Record<string, TagsStatus>>;
+  tags: TagsProps;
+  tagsStatus: TagsStatusProps;
 }) => {
   Object.entries(tags).forEach(([tag]) => {
     const regex = new RegExp(`<${tag}.*?>(.*?)</${tag}>`, "g");
@@ -114,65 +122,94 @@ const checkFileByPatterns = ({
 }: {
   file: string;
   fileContent: string;
-  tags: Record<string, Tags>;
-  tagsPatterns: Record<string, Record<string, TagsWithReason>>;
+  tags: TagsProps;
+  tagsPatterns: TagsPatterns;
 }) => {
   Object.entries(tags).forEach(([tag, value]) => {
-    const regex = new RegExp(`<${tag}.*?>(.*?)</${tag}>`, "g");
+    let regex: RegExp;
+
+    if (tag === "description") {
+      regex = new RegExp(`<meta name="description" content="(.*?)"`, "g");
+    } else {
+      regex = new RegExp(`<${tag}.*?>(.*?)</${tag}>`, "g");
+    }
+
     const matches = fileContent.match(regex);
     if (matches) {
       matches.forEach((match) => {
-        const tagLength = match.replace(`<${tag}>`, "").length;
-        const textLength = match
-          .replace(`<${tag}>`, "")
-          .replace(`</${tag}>`, "").length;
-        if (tagLength < value.minLength || tagLength > value.maxLength) {
-          tagsPatterns[file] = {
-            ...tagsPatterns[file],
-            [tag]: {
-              ...value,
-              reason: `Tag length is <strong>${textLength}</strong> but should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
-            },
-          };
+        let text: string;
+        if (tag === "description") {
+          text = match
+            .replace(/<meta name="description" content="/g, "")
+            .replace(/\"$/g, "");
+        } else {
+          text = match.replace(`<${tag}>`, "").replace(`</${tag}>`, "");
         }
-        if (textLength < value.minLength || textLength > value.maxLength) {
-          tagsPatterns[file] = {
-            ...tagsPatterns[file],
-            [tag]: {
-              ...value,
-              reason: `Text length is <strong>${textLength}</strong> but should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
-            },
-          };
-        }
+        return (tagsPatterns[file] = {
+          ...tagsPatterns[file],
+          [tag]: {
+            ...value,
+            reason: `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
+            count: text.length,
+          },
+        });
+      });
+    } else {
+      return (tagsPatterns[file] = {
+        ...tagsPatterns[file],
+        [tag]: {
+          ...value,
+          reason: `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
+          count: NaN,
+        },
       });
     }
   });
 };
 
-const generateTableRows = (
-  tagsPatterns: Record<string, Record<string, TagsWithReason>>
-) => {
+const generateTableRows = (tagsPatterns: TagsPatterns) => {
   return Object.entries(tagsPatterns)
     .map(([file, tagData]) => {
       const rows = Object.entries(tagData)
         .map(([tag, value]) => {
           return `
-      <tr>
-        <td>${tag}:</td>
-        <td>${value.reason}</td>
-      </tr>`;
+          <tbody>
+          <tr>
+          ${
+            !isNaN(value.count)
+              ? value.maxLength && value.minLength
+                ? `<td>Length of <strong>${tag}</strong>: <strong style="${
+                    value.minLength <= value.count &&
+                    value.count >= value.maxLength
+                      ? "color: red"
+                      : "color: black"
+                  }">${value.count}</strong></td>`
+                : `<td>List of <strong>${tag}</strong>: <strong>${value.keywords}</strong></td>`
+              : `<td>Length of <strong>${tag}</strong>: <strong style="color: red">No characters detected</strong></td>`
+          }
+        ${
+          tag !== "keywords"
+            ? `  <td width="20%">${value.reason}</td>`
+            : ` <td width="20%"></td>`
+        }
+          </tr>
+          </tbody>
+      `;
         })
         .join("");
-      return `<tr>
-        <td>${file}</td>
-      </tr>${rows}`;
+      return `<thead>
+      <tr>
+      <th colspan="2">${file}</th>
+      </tr>
+      </thead>
+      ${rows}
+     <tr class="empty-row"></tr>
+      `;
     })
     .join("");
 };
 
-const generateWithoutTagsTable = (
-  tagsStatus: Record<string, Record<string, TagsStatus>>
-) => {
+const generateWithoutTagsTable = (tagsStatus: TagsStatusProps) => {
   return Object.entries(tagsStatus)
     .map(([file, tags]) => {
       return `<div class="tag-container">
@@ -195,8 +232,8 @@ const generateWithoutTagsTable = (
 };
 
 const prepareHTMLWithTables = (data: {
-  tagsPatterns: Record<string, Record<string, TagsWithReason>>;
-  tagsStatus: Record<string, Record<string, TagsStatus>>;
+  tagsPatterns: TagsPatterns;
+  tagsStatus: TagsStatusProps;
 }) => {
   const { tagsPatterns, tagsStatus } = data;
   const brokenTagsTable = generateTableRows(tagsPatterns);
@@ -215,7 +252,7 @@ const prepareHTMLWithTables = (data: {
         background-color: #f9f9f9;
       }
       h1 {
-        margin-bottom: 10px;
+        margin-bottom: 20px;
       }
       h4 {
         word-break: break-word;
@@ -231,10 +268,10 @@ const prepareHTMLWithTables = (data: {
         border-collapse: collapse;
         width: 100%;
         margin-bottom: 20px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         animation: fadeIn 0.5s ease-in-out;
         }
-      th, td {
+      th, 
+      td {
         border: 1px solid black;
         padding: 8px;
         text-align: left;
@@ -253,7 +290,6 @@ const prepareHTMLWithTables = (data: {
         border-radius: 4px;
         padding: 12px;
         margin-bottom: 20px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         display: flex;
         flex-direction: column;
         animation: fadeIn 0.5s ease-in-out;
@@ -282,6 +318,10 @@ const prepareHTMLWithTables = (data: {
         display: flex;
         justify-content: flex-end;
       }
+      .empty-row {
+        border: none;
+        height: 40px;
+      }
       @keyframes fadeIn {
         from { opacity: 0; }
         to { opacity: 1; }
@@ -292,7 +332,7 @@ const prepareHTMLWithTables = (data: {
     </style>
   </head>
   <body>
-    <h1>Broken tags</h1>
+    <h1>Tags Range</h1>
     <table>
       ${brokenTagsTable}
     </table>
