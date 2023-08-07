@@ -57,8 +57,6 @@ export const sitemapGenerator = (config: ConfigFile) => {
           ? fileWithoutIndex + "/"
           : fileWithoutIndex;
 
-        console.log(fileNameWithSlash);
-
         const priority = Math.max(
           0.1,
           1 -
@@ -74,13 +72,13 @@ export const sitemapGenerator = (config: ConfigFile) => {
               link: `${domain}${rest}`,
               priority: matchedSetting.priority
                 ? matchedSetting.priority
-                : parseFloat(priority.toFixed(1)),
+                : priority,
             };
           }
         } else {
           return {
             link: `${domain}${rest}`,
-            priority: parseFloat(priority.toFixed(1)),
+            priority: priority,
           };
         }
       })
@@ -280,7 +278,7 @@ const localeSeoGenerator = (
       })
       .join("")}
       <lastmod>${new Date().toISOString()}</lastmod>
-      <priority>${priority}</priority>
+      <priority>${(priority + 0.1).toFixed(1)}</priority>
     </url>`;
   });
   return data
@@ -295,7 +293,7 @@ const classicSeoFragmentGenerator = (preparedFiles: File[]) => {
     <url>
       <loc>${page.link}</loc>
       <lastmod>${new Date().toISOString()}</lastmod>
-      <priority>${page.priority}</priority>
+      <priority>${page.priority.toFixed(1)}</priority>
     </url>`
     )
     .join("");
