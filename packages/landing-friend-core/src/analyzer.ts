@@ -18,6 +18,10 @@ type TagsWithReason = TagsRange & {
 };
 
 const staticTags = ["strong", "em", "span"];
+const unicodeToConvert = {
+  "&#x27;": "'",
+  "&amp;": "&",
+};
 
 export const websiteAnalyzer = (config: ConfigFile) => {
   const { input, output, sitemap, analyzer } = config;
@@ -79,7 +83,7 @@ export const websiteAnalyzer = (config: ConfigFile) => {
         JSON.stringify(cleanedTagsPatterns, null, 2)
       );
 
-      saveFile(`${output}/seo-analyze.html`, htmlWithTablesAndCharts);
+      saveFile(`${output}/seo-analyze.html`, await htmlWithTablesAndCharts);
       try {
         await open(path.join(process.cwd(), output, `seo-analyze.html`), {
           app: { name: apps.browser },
@@ -164,15 +168,25 @@ const checkFileByPatterns = ({
               ));
 
           staticTags.forEach((staticTag) => {
-            const regex = new RegExp(`<${staticTag}>|<\/${staticTag}>`, "g");
-            text = text.replace(regex, "");
+            Object.entries(unicodeToConvert).forEach(
+              ([unicode, replacement]) => {
+                const regex = new RegExp(
+                  `<${staticTag}>|<\/${staticTag}>|${unicode}`,
+                  "g"
+                );
+                text = text.replace(regex, replacement);
+              }
+            );
           });
 
           return (tagsPatterns[file] = {
             ...tagsPatterns[file],
             [tag]: {
               ...value,
-              requirement: `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
+              requirement:
+                tag === "keywords"
+                  ? ``
+                  : `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
               count: text.length,
               content: text,
               multipleTags: false,
@@ -181,32 +195,23 @@ const checkFileByPatterns = ({
         });
       }
     } else {
-      if (tag !== "keywords") {
-        return (tagsPatterns[file] = {
-          ...tagsPatterns[file],
-          [tag]: {
-            ...value,
-            requirement: `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
-            count: NaN,
-            multipleTags: false,
-          },
-        });
-      } else {
-        return (tagsPatterns[file] = {
-          ...tagsPatterns[file],
-          [tag]: {
-            ...value,
-            requirement: `At least one keyword required`,
-            count: NaN,
-            multipleTags: false,
-          },
-        });
-      }
+      return (tagsPatterns[file] = {
+        ...tagsPatterns[file],
+        [tag]: {
+          ...value,
+          requirement:
+            tag === "keywords"
+              ? `At least one keyword required`
+              : `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
+          count: NaN,
+          multipleTags: false,
+        },
+      });
     }
   });
 };
 
-const generateTableRows = (tagsPatterns: TagsPatterns) => {
+const generateTableRows = async (tagsPatterns: TagsPatterns) => {
   return Object.entries(tagsPatterns)
     .map(([file, tagData]) => {
       const rows = Object.entries(tagData)

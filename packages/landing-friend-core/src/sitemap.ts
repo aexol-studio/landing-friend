@@ -6,7 +6,6 @@ import ISO from "iso-639-1";
 type File = {
   link: string;
   priority: number;
-  customPriority?: boolean;
 };
 
 type LocaleFile = {
@@ -43,6 +42,7 @@ export const sitemapGenerator = (config: ConfigFile) => {
     const preparedFiles: File[] = allHtmlFiles
       .map((file) => {
         const fileWithoutIndex = file.replace(/index/g, "").replace(/\/$/g, "");
+        const fileNameWithSlash = file.includes("index") ? file : file + "/";
         const matchedSetting = settingPerWildcard.find((setting) => {
           const regexPattern = setting.pagePattern
             .replace(/\/$/g, "$")
@@ -57,11 +57,12 @@ export const sitemapGenerator = (config: ConfigFile) => {
           ? fileWithoutIndex + "/"
           : fileWithoutIndex;
 
+        console.log(fileNameWithSlash);
+
         const priority = Math.max(
           0.1,
           1 -
-            (fileWithoutIndex.replace(/\/$|^\//g, "").match(/\//g) || [])
-              .length *
+            (fileNameWithSlash.replace(/^\//g, "").match(/\//g) || []).length *
               0.1
         );
 
@@ -74,7 +75,6 @@ export const sitemapGenerator = (config: ConfigFile) => {
               priority: matchedSetting.priority
                 ? matchedSetting.priority
                 : parseFloat(priority.toFixed(1)),
-              customPriority: !!matchedSetting.priority,
             };
           }
         } else {
@@ -254,20 +254,13 @@ const localeSeoGenerator = (
   localeSitemapFiles: Array<Record<string, LocaleFile>>,
   defaultLocale: string
 ) => {
-  const classicWithoutLocales: File[] = classicSitemapFiles
-    .filter((classic) => {
+  const classicWithoutLocales: File[] = classicSitemapFiles.filter(
+    (classic) => {
       return !localeSitemapFiles.some(
         (locale) => classic.link === Object.keys(locale)[0]
       );
-    })
-    .map((classic) => {
-      return {
-        link: classic.link,
-        priority: classic.customPriority
-          ? classic.priority
-          : parseFloat((classic.priority - 0.1).toFixed(1)),
-      };
-    });
+    }
+  );
 
   const data = localeSitemapFiles.map((page) => {
     const key = Object.keys(page)[0];
