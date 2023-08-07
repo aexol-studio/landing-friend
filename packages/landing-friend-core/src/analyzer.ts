@@ -15,6 +15,7 @@ type TagsWithReason = TagsRange & {
   requirement: string;
   count: number;
   multipleTags?: boolean;
+  keywordsIncluded: string[];
 };
 
 const staticTags = ["strong", "em", "span"];
@@ -128,6 +129,22 @@ const checkFileByPatterns = ({
 }) => {
   Object.entries(tags).forEach(([tag, value]) => {
     let regex: RegExp;
+    const keywordsMatch = fileContent.match(
+      new RegExp(`<meta property="keywords" content="(.*?)"`, "g")
+    );
+
+    const keywordsArray: string[] = [];
+
+    if (keywordsMatch && keywordsMatch.length > 0) {
+      const contentMatch = keywordsMatch[0].match(/content="(.*?)"/);
+
+      if (contentMatch && contentMatch[1]) {
+        const keywords = contentMatch[1].split(", ");
+        keywords.forEach((keyword) => {
+          keywordsArray.push(keyword.trim());
+        });
+      }
+    }
 
     tag === "description"
       ? (regex = new RegExp(`<meta name="description" content="(.*?)"`, "g"))
@@ -185,11 +202,14 @@ const checkFileByPatterns = ({
               ...value,
               requirement:
                 tag === "keywords"
-                  ? ``
+                  ? `At least one keyword required`
                   : `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
               count: text.length,
               content: text,
               multipleTags: false,
+              keywordsIncluded:
+                tag !== "keywords" &&
+                keywordsArray.filter((keyword) => text.includes(keyword)),
             },
           });
         });
@@ -218,7 +238,7 @@ const generateTableRows = (tagsPatterns: TagsPatterns) => {
         .map(([tag, value]) => {
           return `
           <tbody>
-          <tr>
+      <tr>
           ${
             !isNaN(value.count)
               ? value.maxLength && value.minLength
@@ -229,9 +249,11 @@ const generateTableRows = (tagsPatterns: TagsPatterns) => {
                       value.count <= value.maxLength
                         ? "color: black"
                         : "color: red"
-                    }">${
-                      value.count
-                    }</strong></td><td width="20%"><strong style="${
+                    }">${value.count}</strong>${
+                      value.keywordsIncluded.length > 0
+                        ? ` | <strong style="color:green">${value.keywordsIncluded}</strong>`
+                        : ` | <strong style="color:red">Does not contain keywords</strong>`
+                    }</td><td width="20%"><strong style="${
                       value.count >= value.minLength &&
                       value.count <= value.maxLength
                         ? "color: black"
