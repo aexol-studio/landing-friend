@@ -83,7 +83,7 @@ export const websiteAnalyzer = (config: ConfigFile) => {
         JSON.stringify(cleanedTagsPatterns, null, 2)
       );
 
-      saveFile(`${output}/seo-analyze.html`, await htmlWithTablesAndCharts);
+      saveFile(`${output}/seo-analyze.html`, htmlWithTablesAndCharts);
       try {
         await open(path.join(process.cwd(), output, `seo-analyze.html`), {
           app: { name: apps.browser },
@@ -211,7 +211,7 @@ const checkFileByPatterns = ({
   });
 };
 
-const generateTableRows = async (tagsPatterns: TagsPatterns) => {
+const generateTableRows = (tagsPatterns: TagsPatterns) => {
   return Object.entries(tagsPatterns)
     .map(([file, tagData]) => {
       const rows = Object.entries(tagData)
