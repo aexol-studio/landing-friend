@@ -1,6 +1,6 @@
 {
   "name": "@landing-friend/core",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "",
   "main": "lib/index.js",
   "keywords": [],
@@ -8,7 +8,8 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "rimraf lib tsconfig.build.tsbuildinfo && ttsc --build tsconfig.build.json"
+    "build": "rimraf lib tsconfig.build.tsbuildinfo && ttsc --build tsconfig.build.json",
+    "watch": "ttsc --watch"
   },
   "dependencies": {
     "chalk": "^5.1.2",

@@ -2,9 +2,6 @@
   "name": "@landing-friend/mono-repo",
   "version": "0.0.1",
   "description": "",
-  "bin": {
-    "landing-friend": "./packages/landing-friend/dist/CLI.js"
-  },
   "scripts": {
     "build": "npm run build --ws --if-present"
   },

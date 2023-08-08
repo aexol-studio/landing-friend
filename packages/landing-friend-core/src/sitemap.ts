@@ -60,8 +60,8 @@ export const sitemapGenerator = (config: ConfigFile) => {
         const priority = Math.max(
           0.1,
           1 -
-            (fileNameWithSlash.replace(/^\//g, "").match(/\//g) || []).length *
-              0.1
+          (fileNameWithSlash.replace(/^\//g, "").match(/\//g) || []).length *
+          0.1
         );
 
         if (matchedSetting) {
@@ -170,18 +170,18 @@ const localesSitemapGenerator = ({
     locales.push(defaultLocale.toLowerCase());
 
   const pagesWithLocales = files.filter((file) => {
-    return locales.some((locale) => file.link.includes(`/${locale}`));
+    return locales.some((locale) => file.link.includes(`/${locale}/`));
   });
 
   const classicSitemapFiles = files.filter(
-    (file) => !locales.some((locale) => file.link.includes(`/${locale}`))
+    (file) => !locales.some((locale) => file.link.includes(`/${locale}/`))
   );
 
   const preparedFiles = pagesWithLocales
     .map((page) => {
       const url = new URL(page.link);
       const locale = url.pathname.split("/")[1];
-      const link = page.link.replace(`/${locale}`, "/__locale__");
+      const link = page.link.replace(`/${locale}/`, "/__locale__/");
       return {
         link,
         priority: page.priority,
@@ -193,12 +193,12 @@ const localesSitemapGenerator = ({
     );
 
   const newFiles = preparedFiles.reduce((acc, file) => {
-    const split = file.link.split("/__locale__");
+    const split = file.link.split("/__locale__/");
     if (split.length === 2) {
       const link = file.link;
       const priority = file.priority;
       acc[link] = locales.map((locale) => {
-        const newLink = link.replace("/__locale__", `/${locale}`);
+        const newLink = link.replace("/__locale__/", `/${locale}/`);
         return {
           link: newLink,
           priority,
@@ -268,15 +268,15 @@ const localeSeoGenerator = (
     return `
     <url>
       <loc>${key}</loc>${links
-      .map(({ locale, link }) => {
-        const replaced = link.replace(`/${locale}`, "");
-        return defaultLocale === locale
-          ? `
+        .map(({ locale, link }) => {
+          const replaced = link.replace(`/${locale}`, "");
+          return defaultLocale === locale
+            ? `
         <xhtml:link rel="alternate" hreflang="${locale}" href="${replaced}"/>`
-          : `
+            : `
         <xhtml:link rel="alternate" hreflang="${locale}" href="${link}"/>`;
-      })
-      .join("")}
+        })
+        .join("")}
       <lastmod>${new Date().toISOString()}</lastmod>
       <priority>${(priority + 0.1).toFixed(1)}</priority>
     </url>`;
