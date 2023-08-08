@@ -208,8 +208,9 @@ const checkFileByPatterns = ({
               content: text,
               multipleTags: false,
               keywordsIncluded:
-                tag !== "keywords" &&
-                keywordsArray.filter((keyword) => text.includes(keyword)),
+                tag !== "keywords"
+                  ? keywordsArray.filter((keyword) => text.includes(keyword))
+                  : `Keyword tag`,
             },
           });
         });
@@ -251,14 +252,14 @@ const generateTableRows = (tagsPatterns: TagsPatterns) => {
                         : "color: red"
                     }">${value.count}</strong>${
                       value.keywordsIncluded.length > 0
-                        ? ` | <strong style="color:green">${value.keywordsIncluded}</strong>`
+                        ? ` | <strong style="color:green">Keywords included: ${value.keywordsIncluded}</strong>`
                         : ` | <strong style="color:red">Does not contain keywords</strong>`
-                    }</td><td width="20%"><strong style="${
+                    }</td><td width="20%"><span style="${
                       value.count >= value.minLength &&
                       value.count <= value.maxLength
                         ? "color: black"
                         : "color: red"
-                    }">${value.requirement}</strong></td>`
+                    }">${value.requirement}</span></td>`
                 : `<td>List of <strong>${tag}</strong>: <strong>${value.content}</strong></td><td></td>`
               : `<td>Length of <strong>${tag}</strong>: <strong style="color: red">No characters detected</strong></td><td width="20%"><strong style="color: red">${value.requirement}</strong></td>`
           }
@@ -268,9 +269,7 @@ const generateTableRows = (tagsPatterns: TagsPatterns) => {
 
       return `<thead>
       <tr>
-      <th colspan="2">${file
-        .replace(`${process.cwd()}/out/`, "")
-        .replace(".html", "")}</th>
+      <th colspan="2">${file}</th>
       </tr>
       </thead>
       ${rows}
