@@ -1,6 +1,6 @@
 {
   "name": "@landing-friend/cli",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "",
   "type": "module",
   "main": "lib/CLI.js",
@@ -14,11 +14,9 @@
     "build": "rimraf lib tsconfig.build.tsbuildinfo && ttsc --build tsconfig.build.json"
   },
   "dependencies": {
-    "@landing-friend/core": "^0.0.1",
-    "graphql-zeus": "^5.2.3",
+    "@landing-friend/core": "^0.0.2",
     "inquirer": "^9.2.8",
     "node-fetch": "^3.3.0",
-    "ws": "^8.11.0",
     "yargs": "^17.6.0"
   },
   "devDependencies": {

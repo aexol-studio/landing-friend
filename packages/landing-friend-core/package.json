@@ -1,6 +1,6 @@
 {
   "name": "@landing-friend/core",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "",
   "main": "lib/index.js",
   "keywords": [],
@@ -14,8 +14,10 @@
     "chalk": "^5.1.2",
     "chokidar": "^3.5.3",
     "cli-spinners": "^2.7.0",
+    "iso-639-1": "^2.1.15",
     "open": "^9.1.0",
     "ora": "^6.1.2",
-    "ts-node": "^10.9.1"
+    "ts-node": "^10.9.1",
+    "typescript": "^4.8.3"
   }
 }
