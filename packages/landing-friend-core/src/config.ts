@@ -6,13 +6,13 @@ import ts from "typescript";
 type WildcardSettings = { priority?: number; exclude?: boolean };
 
 type SitemapSettings = {
-  locale?: {
+  locale: {
     defaultLocale: LanguageCode;
     localeWildcard: string;
   };
-  trailingSlash?: boolean;
-  sortBy?: "priority" | "alphabetically-asc" | "alphabetically-desc";
-  settingsPerWildcard?: Record<string, WildcardSettings>;
+  trailingSlash: boolean;
+  sortBy: "priority" | "alphabetically-asc" | "alphabetically-desc";
+  settingsPerWildcard: Record<string, WildcardSettings>;
 };
 
 export type TagsProps =
@@ -44,16 +44,17 @@ export type ConfigFile = {
   domain: string;
   input: string;
   output: string;
+  robots: boolean;
   sitemap?: SitemapSettings;
-  robots?: boolean;
   analyzer?: {
     tags: TagsProps;
   };
 };
 export const GLOBAL_CONFIG_FILE: ConfigFile = {
   domain: "https://www.example.com",
-  input: "./out/",
-  output: "./out/",
+  input: "./out",
+  output: "./out",
+  robots: true,
 };
 export const EXTENDED_SITEMAP_GLOBAL_CONFIG_FILE: Pick<ConfigFile, "sitemap"> =
   {
@@ -74,9 +75,6 @@ export const EXTENDED_SITEMAP_GLOBAL_CONFIG_FILE: Pick<ConfigFile, "sitemap"> =
       },
     },
   };
-export const EXTENDED_ROBOTS_GLOBAL_CONFIG_FILE: Pick<ConfigFile, "robots"> = {
-  robots: true,
-};
 export const EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE: Pick<
   ConfigFile,
   "analyzer"
@@ -115,6 +113,7 @@ export const readConfig = (filePath: string): ConfigFile | undefined => {
       .replace(`import { ConfigFile } from "@landing-friend/core";`, "")
       .replace("export const GLOBAL_CONFIG_FILE: ConfigFile = ", "")
       .replace(";", "")
+      .replace(`'`, `"`)
       .trim();
 
     const config = ts.parseConfigFileTextToJson(filePath, configFileText)
@@ -159,13 +158,14 @@ export const checkConfigDirectories = async (config: ConfigFile) => {
     );
   }
 };
+
 export const initConfig = async (values: ConfigFile = GLOBAL_CONFIG_FILE) => {
   const formattedConfig = `import { ConfigFile } from "@landing-friend/core";
 
 export const GLOBAL_CONFIG_FILE: ConfigFile = {
-  ${Object.entries(values)
-    .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
-    .join(",\n  ")}
+${Object.entries(values)
+  .map(([key, value]) => `${key}: ${JSON.stringify(value, null, 2)}`)
+  .join(",\n  ")}
 };`;
 
   fs.writeFileSync("landing-friend-config.ts", formattedConfig);
