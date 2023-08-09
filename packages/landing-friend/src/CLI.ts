@@ -16,7 +16,7 @@ process.on("SIGINT", () => {
   process.exit();
 });
 
-const WelcomeMessage = `Landing Friend`;
+const WelcomeMessage = `Landing Friend, Your SEO in one place.`;
 
 yargs(hideBin(process.argv))
   .usage(WelcomeMessage)
@@ -26,17 +26,17 @@ yargs(hideBin(process.argv))
     "Generate config file",
     {
       help: {
-        describe: `Generate config file`,
+        describe: `It generates a configuration file containing basic or extended configuration depending on the selected options.`,
       },
     },
     async () => await configInit()
   )
   .command(
     "generate",
-    "Generate SEO for your landing page",
+    "Generate sitemap for your landing page",
     {
       help: {
-        describe: `Generate SEO for your landing page`,
+        describe: `Generate sitemap/robots files for your page`,
       },
     },
     async () => {
@@ -62,7 +62,7 @@ yargs(hideBin(process.argv))
     "Analyze your landing page",
     {
       help: {
-        describe: `Analyze your landing page`,
+        describe: `Analysis of your website through defined values in the config generates HTML and JSON files.`,
       },
     },
     async () => {

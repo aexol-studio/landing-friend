@@ -1,6 +1,6 @@
 {
   "name": "@landing-friend/cli",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "",
   "type": "module",
   "main": "lib/CLI.js",
@@ -15,7 +15,7 @@
     "watch": "ttsc --watch"
   },
   "dependencies": {
-    "@landing-friend/core": "^0.0.3",
+    "@landing-friend/core": "^0.0.4",
     "inquirer": "^9.2.8",
     "node-fetch": "^3.3.0",
     "yargs": "^17.6.0"
