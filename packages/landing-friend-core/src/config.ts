@@ -5,7 +5,7 @@ import ts from "typescript";
 
 type WildcardSettings = { priority?: number; exclude?: boolean };
 
-export type SitemapSettings = {
+type SitemapSettings = {
   locale?: {
     defaultLocale: LanguageCode;
     localeWildcard: string;
@@ -115,7 +115,6 @@ export const readConfig = (filePath: string): ConfigFile | undefined => {
       .replace(`import { ConfigFile } from "@landing-friend/core";`, "")
       .replace("export const GLOBAL_CONFIG_FILE: ConfigFile = ", "")
       .replace(";", "")
-
       .trim();
 
     const config = ts.parseConfigFileTextToJson(filePath, configFileText)
@@ -160,7 +159,7 @@ export const checkConfigDirectories = async (config: ConfigFile) => {
     );
   }
 };
-export const initConfig = async (values: ConfigFile) => {
+export const initConfig = async (values: ConfigFile = GLOBAL_CONFIG_FILE) => {
   const formattedConfig = `import { ConfigFile } from "@landing-friend/core";
 
 export const GLOBAL_CONFIG_FILE: ConfigFile = {

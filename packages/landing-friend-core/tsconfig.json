@@ -13,7 +13,6 @@
     "noUnusedLocals": true,
     "strictNullChecks": true,
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
     "allowJs": true,
     "strict": true,
     "composite": true,

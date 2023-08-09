@@ -1,3 +1,4 @@
 # Landing Friend
 
-Install by: npm i -D @landing-friend
+Install global: npm i -g @landing-friend/cli@latest
+Install local: npm i -D @landing-friend/core

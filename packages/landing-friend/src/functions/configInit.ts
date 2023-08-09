@@ -1,24 +1,14 @@
 import {
   GLOBAL_CONFIG_FILE,
-  EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE,
+  EXTENDED_ROBOTS_GLOBAL_CONFIG_FILE,
   EXTENDED_SITEMAP_GLOBAL_CONFIG_FILE,
+  EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE,
   initConfig,
   message,
   readConfig,
-  SitemapSettings,
-  TagsProps,
   ConfigFile,
-  EXTENDED_ROBOTS_GLOBAL_CONFIG_FILE,
 } from "@landing-friend/core";
 import inquirer from "inquirer";
-
-type AdditionalConfigFields = {
-  sitemap?: SitemapSettings;
-  robots?: boolean;
-  analyzer?: {
-    tags: TagsProps;
-  };
-};
 
 export const configInit = async () => {
   const config = await readConfig("landing-friend-config.ts");
@@ -51,9 +41,9 @@ export const configInit = async () => {
       default: GLOBAL_CONFIG_FILE.output,
     },
   ]);
-  let extendResponseByRobots: Pick<AdditionalConfigFields, "robots"> = {};
-  let extendResponseBySitemap: Pick<AdditionalConfigFields, "sitemap"> = {};
-  let extendResponseByAnalyzer: Pick<AdditionalConfigFields, "analyzer"> = {};
+  let extendResponseByRobots: Pick<ConfigFile, "robots"> = {};
+  let extendResponseBySitemap: Pick<ConfigFile, "sitemap"> = {};
+  let extendResponseByAnalyzer: Pick<ConfigFile, "analyzer"> = {};
   const { extendConfigBySitemap } = await inquirer.prompt<{
     extendConfigBySitemap: boolean;
   }>({
@@ -131,7 +121,7 @@ export const configInit = async () => {
               .countKeywords,
         },
         {
-          type: "input",
+          type: "number",
           name: "analyzer.tags.h1.minLength",
           message: "Enter minimum length for h1:",
           default:
@@ -141,7 +131,7 @@ export const configInit = async () => {
             EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.tags.h1.minLength,
         },
         {
-          type: "input",
+          type: "number",
           name: "analyzer.tags.h1.maxLength",
           message: "Enter maximum length for h1:",
           default:
@@ -151,7 +141,7 @@ export const configInit = async () => {
             EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.tags.h1.maxLength,
         },
         {
-          type: "input",
+          type: "number",
           name: "analyzer.tags.title.minLength",
           message: "Enter minimum length for title:",
           default:
@@ -161,7 +151,7 @@ export const configInit = async () => {
             EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.tags.title.minLength,
         },
         {
-          type: "input",
+          type: "number",
           name: "analyzer.tags.title.maxLength",
           message: "Enter maximum length for title:",
           default:
@@ -171,7 +161,7 @@ export const configInit = async () => {
             EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.tags.title.maxLength,
         },
         {
-          type: "input",
+          type: "number",
           name: "analyzer.tags.description.minLength",
           message: "Enter minimum length for description:",
           default:
@@ -183,7 +173,7 @@ export const configInit = async () => {
               .minLength,
         },
         {
-          type: "input",
+          type: "number",
           name: "analyzer.tags.description.maxLength",
           message: "Enter maximum length for description:",
           default:
