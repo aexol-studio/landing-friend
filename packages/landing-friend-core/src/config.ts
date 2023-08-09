@@ -5,7 +5,7 @@ import ts from "typescript";
 
 type WildcardSettings = { priority?: number; exclude?: boolean };
 
-type SitemapSettings = {
+export type SitemapSettings = {
   locale?: {
     defaultLocale: LanguageCode;
     localeWildcard: string;
@@ -53,7 +53,51 @@ export type ConfigFile = {
 export const GLOBAL_CONFIG_FILE: ConfigFile = {
   domain: "https://www.example.com",
   input: "./out/",
-  output: "./public/",
+  output: "./out/",
+};
+export const EXTENDED_SITEMAP_GLOBAL_CONFIG_FILE: Pick<ConfigFile, "sitemap"> =
+  {
+    sitemap: {
+      locale: {
+        defaultLocale: "en",
+        localeWildcard: "/$locale/",
+      },
+      sortBy: "priority",
+      trailingSlash: true,
+      settingsPerWildcard: {
+        "404": {
+          exclude: true,
+        },
+        "/assets/*": {
+          exclude: true,
+        },
+      },
+    },
+  };
+export const EXTENDED_ROBOTS_GLOBAL_CONFIG_FILE: Pick<ConfigFile, "robots"> = {
+  robots: true,
+};
+export const EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE: Pick<
+  ConfigFile,
+  "analyzer"
+> = {
+  analyzer: {
+    tags: {
+      h1: {
+        minLength: 10,
+        maxLength: 70,
+      },
+      title: {
+        minLength: 10,
+        maxLength: 70,
+      },
+      description: {
+        maxLength: 200,
+        minLength: 50,
+      },
+      keywords: { countKeywords: true },
+    },
+  },
 };
 
 export const readConfig = (filePath: string): ConfigFile | undefined => {
@@ -71,6 +115,7 @@ export const readConfig = (filePath: string): ConfigFile | undefined => {
       .replace(`import { ConfigFile } from "@landing-friend/core";`, "")
       .replace("export const GLOBAL_CONFIG_FILE: ConfigFile = ", "")
       .replace(";", "")
+
       .trim();
 
     const config = ts.parseConfigFileTextToJson(filePath, configFileText)
@@ -115,7 +160,7 @@ export const checkConfigDirectories = async (config: ConfigFile) => {
     );
   }
 };
-export const initConfig = async (values: ConfigFile = GLOBAL_CONFIG_FILE) => {
+export const initConfig = async (values: ConfigFile) => {
   const formattedConfig = `import { ConfigFile } from "@landing-friend/core";
 
 export const GLOBAL_CONFIG_FILE: ConfigFile = {

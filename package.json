@@ -8,6 +8,7 @@
   "keywords": [],
   "author": "",
   "license": "MIT",
+  "type": "module",
   "devDependencies": {
     "@types/node": "^18.11.2",
     "@types/ws": "^8.5.3",
@@ -28,7 +29,6 @@
     "./packages/landing-friend"
   ],
   "dependencies": {
-    "cosmiconfig": "^8.2.0",
     "iso-639-1": "^2.1.15"
   }
 }

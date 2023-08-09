@@ -6,16 +6,14 @@ import { message } from "./console.js";
 
 type TagsPatterns = Record<string, Record<string, TagsWithReason>>;
 
-type TagsRange = {
+type TagsWithReason = {
   minLength?: number;
   maxLength?: number;
   content?: string;
-};
-type TagsWithReason = TagsRange & {
-  requirement: string;
+  requirement?: string;
   count: number;
   multipleTags?: boolean;
-  keywordsIncluded: string[];
+  keywordsIncluded?: string[];
 };
 
 const staticTags = ["strong", "em", "span"];
@@ -74,7 +72,9 @@ export const websiteAnalyzer = (config: ConfigFile) => {
         Object.entries(tagData).forEach(([tag, value]) => {
           cleanedTagsPatterns[file][tag] = {
             ...value,
-            requirement: value.requirement.replace(/<\/?strong>/g, ""),
+            requirement:
+              value.requirement &&
+              value.requirement.replace(/<\/?strong>/g, ""),
           };
         });
       });
@@ -159,7 +159,6 @@ const checkFileByPatterns = ({
         return (tagsPatterns[file] = {
           ...tagsPatterns[file],
           [tag]: {
-            ...value,
             requirement: `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
             count: matches.length,
             multipleTags: true,
@@ -199,18 +198,19 @@ const checkFileByPatterns = ({
           return (tagsPatterns[file] = {
             ...tagsPatterns[file],
             [tag]: {
-              ...value,
+              maxLength: tag !== "keywords" ? value.maxLength : undefined,
+              minLength: tag !== "keywords" ? value.minLength : undefined,
               requirement:
                 tag === "keywords"
-                  ? `At least one keyword required`
+                  ? undefined
                   : `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
               count: text.length,
               content: text,
-              multipleTags: false,
+              multipleTags: tag !== "keywords" ? false : undefined,
               keywordsIncluded:
                 tag !== "keywords"
                   ? keywordsArray.filter((keyword) => text.includes(keyword))
-                  : `Keyword tag`,
+                  : undefined,
             },
           });
         });
@@ -219,13 +219,11 @@ const checkFileByPatterns = ({
       return (tagsPatterns[file] = {
         ...tagsPatterns[file],
         [tag]: {
-          ...value,
           requirement:
             tag === "keywords"
               ? `At least one keyword required`
               : `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
           count: NaN,
-          multipleTags: false,
         },
       });
     }
@@ -251,6 +249,7 @@ const generateTableRows = (tagsPatterns: TagsPatterns) => {
                         ? "color: black"
                         : "color: red"
                     }">${value.count}</strong>${
+                      value.keywordsIncluded &&
                       value.keywordsIncluded.length > 0
                         ? ` | <strong style="color:green">Keywords included: ${value.keywordsIncluded}</strong>`
                         : ` | <strong style="color:red">Does not contain keywords</strong>`
@@ -263,7 +262,7 @@ const generateTableRows = (tagsPatterns: TagsPatterns) => {
                 : `<td>List of <strong>${tag}</strong>: <strong>${value.content}</strong></td><td></td>`
               : `<td>Length of <strong>${tag}</strong>: <strong style="color: red">No characters detected</strong></td><td width="20%"><strong style="color: red">${value.requirement}</strong></td>`
           }
-      `;
+          `;
         })
         .join("");
 
@@ -305,7 +304,6 @@ const prepareHTMLWithTables = (data: { tagsPatterns: TagsPatterns }) => {
       table {
         border-collapse: collapse;
         width: 100%;
-        margin-bottom: 20px;
         animation: fadeIn 0.5s ease-in-out;
         }
       th, 
