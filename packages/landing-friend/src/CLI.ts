@@ -20,7 +20,7 @@ const WelcomeMessage = `Landing Friend, Your SEO in one place.`;
 
 yargs(hideBin(process.argv))
   .usage(WelcomeMessage)
-  .scriptName("landing-friend")
+  .scriptName("landing-friend / lf")
   .command(
     "init",
     "Generate config file",
