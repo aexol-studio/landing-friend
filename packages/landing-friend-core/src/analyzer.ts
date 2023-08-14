@@ -209,7 +209,7 @@ const checkFileByPatterns = ({
               multipleTags: tag !== "keywords" ? false : undefined,
               keywordsIncluded:
                 tag !== "keywords"
-                  ? keywordsArray.filter((keyword) => text.includes(keyword))
+                  ? keywordsArray.filter((keyword) => text.toLowerCase().includes(keyword.toLowerCase()))
                   : undefined,
             },
           });
