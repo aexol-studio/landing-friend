@@ -25,7 +25,7 @@ const unicodeToConvert = {
 const charactersToChange = ["！", "｜", "：", "ı"];
 
 export const websiteAnalyzer = (config: ConfigFile) => {
-  const { input, output, sitemap, analyzer } = config;
+  const { input, sitemap, analyzer } = config;
   if (!analyzer) {
     return {
       analyze: async () => message("Define analyzer in config", "redBright"),
@@ -96,7 +96,7 @@ export const websiteAnalyzer = (config: ConfigFile) => {
         );
       }
       try {
-        await open(path.join(process.cwd(), output, `seo-analyze.html`), {
+        await open(path.join(process.cwd(), "./SEO", `seo-analyze.html`), {
           app: { name: apps.browser },
         });
       } catch {
@@ -259,8 +259,9 @@ const generateTableRows = (tagsPatterns: TagsPatterns) => {
                         : "color: red"
                     }">${value.count}</strong>${
                       value.forbiddenCharacters &&
-                      value.forbiddenCharacters.length > 1 &&
-                      `(<strong style="color:red">Contains forbidden words: ${value.forbiddenCharacters}</strong>)`
+                      value.forbiddenCharacters.length > 0
+                        ? ` (<strong style="color:red">Contains forbidden words: ${value.forbiddenCharacters}</strong>)`
+                        : ``
                     }${
                       value.keywordsIncluded &&
                       value.keywordsIncluded.length > 0
