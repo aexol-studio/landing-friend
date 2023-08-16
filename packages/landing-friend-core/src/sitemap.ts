@@ -1,6 +1,6 @@
 import { ConfigFile } from "./config.js";
 import { messageWithContent } from "./console.js";
-import { getHtmlFiles, saveFile, saveOldSitemap } from "./utils.js";
+import { getHtmlFiles, saveSitemap, saveOldSitemap } from "./utils.js";
 import ISO from "iso-639-1";
 
 type File = {
@@ -60,8 +60,8 @@ export const sitemapGenerator = (config: ConfigFile) => {
         const priority = Math.max(
           0.1,
           1 -
-          (fileNameWithSlash.replace(/^\//g, "").match(/\//g) || []).length *
-          0.1
+            (fileNameWithSlash.replace(/^\//g, "").match(/\//g) || []).length *
+              0.1
         );
 
         if (matchedSetting) {
@@ -109,8 +109,8 @@ export const sitemapGenerator = (config: ConfigFile) => {
       sitemapXML = classicSitemapGenerator({ files });
     }
 
-    saveOldSitemap(`${output}/sitemap.xml`);
-    saveFile(`${output}/sitemap.xml`, sitemapXML);
+    saveOldSitemap(`${output}/sitemap.xml`, `./SEO`);
+    saveSitemap(`${output}/sitemap.xml`, sitemapXML);
   };
 
   const generateRobots = () => {
@@ -130,7 +130,7 @@ export const sitemapGenerator = (config: ConfigFile) => {
 
     const robotsTXT = `Sitemap: ${domain}/sitemap.xml\n\nUser-agent: *\n${excludedPages}`;
 
-    saveFile(`${output}/robots.txt`, robotsTXT);
+    saveSitemap(`${output}/robots.txt`, robotsTXT);
   };
 
   const generateAll = () => {
@@ -268,15 +268,15 @@ const localeSeoGenerator = (
     return `
     <url>
       <loc>${key}</loc>${links
-        .map(({ locale, link }) => {
-          const replaced = link.replace(`/${locale}`, "");
-          return defaultLocale === locale
-            ? `
+      .map(({ locale, link }) => {
+        const replaced = link.replace(`/${locale}`, "");
+        return defaultLocale === locale
+          ? `
         <xhtml:link rel="alternate" hreflang="${locale}" href="${replaced}"/>`
-            : `
+          : `
         <xhtml:link rel="alternate" hreflang="${locale}" href="${link}"/>`;
-        })
-        .join("")}
+      })
+      .join("")}
       <lastmod>${new Date().toISOString()}</lastmod>
       <priority>${(priority + 0.1).toFixed(1)}</priority>
     </url>`;

@@ -49,7 +49,7 @@ export const readFile = (filePath: string) => {
   return fs.readFileSync(filePath, "utf8");
 };
 
-export const saveFile = (filePath: string, content: string) => {
+export const saveSitemap = (filePath: string, content: string) => {
   const directory = path.dirname(filePath);
   if (!fs.existsSync(directory)) {
     fs.mkdirSync(directory, { recursive: true });
@@ -58,10 +58,22 @@ export const saveFile = (filePath: string, content: string) => {
   fs.writeFileSync(filePath, content);
 };
 
-export const saveOldSitemap = (filePath: string) => {
+export const saveAnalyze = (filePath: string, content: string) => {
+  const directory = path.dirname(filePath);
+  if (!fs.existsSync(directory)) {
+    fs.mkdirSync(directory, { recursive: true });
+    message(`Folder SEO was created in ${directory}`, "yellow");
+  }
+  fs.writeFileSync(filePath, content);
+};
+
+export const saveOldSitemap = (filePath: string, newFilePath: string) => {
   if (fs.existsSync(filePath)) {
-    const oldFilePath = filePath.replace(/\.xml$/, "Old.xml");
-    message(`Old sitemap detected. Moved to ${oldFilePath}`, "green");
-    fs.copyFileSync(filePath, oldFilePath);
+    if (!fs.existsSync(newFilePath)) {
+      fs.mkdirSync(newFilePath, { recursive: true });
+      message(`Folder SEO was created in ${newFilePath}`, "yellow");
+    }
+    fs.copyFileSync(filePath, `${newFilePath}/sitemapOld.xml`);
+    message(`Old sitemap detected. Moved to ${newFilePath}`, "green");
   }
 };

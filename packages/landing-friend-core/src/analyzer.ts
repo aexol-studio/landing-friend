@@ -1,6 +1,6 @@
 import path from "path";
 import { ConfigFile, TagsProps } from "./config.js";
-import { getFilesToAnalyze, readFile, saveFile } from "./utils.js";
+import { getFilesToAnalyze, readFile, saveAnalyze } from "./utils.js";
 import open, { apps } from "open";
 import { message } from "./console.js";
 
@@ -14,13 +14,15 @@ type TagsWithReason = {
   count: number;
   multipleTags?: boolean;
   keywordsIncluded?: string[];
+  forbiddenCharacters?: string[];
 };
 
-const staticTags = ["strong", "em", "span"];
+const staticTags = ["strong", "em", "span", "br"];
 const unicodeToConvert = {
   "&#x27;": "'",
   "&amp;": "&",
 };
+const charactersToChange = ["！", "｜", "：", "ı"];
 
 export const websiteAnalyzer = (config: ConfigFile) => {
   const { input, output, sitemap, analyzer } = config;
@@ -78,25 +80,28 @@ export const websiteAnalyzer = (config: ConfigFile) => {
           };
         });
       });
-
-      saveFile(
-        `${output}/seo-analyze.json`,
-        JSON.stringify(cleanedTagsPatterns, null, 2)
-      );
-
-      saveFile(`${output}/seo-analyze.html`, htmlWithTablesAndCharts);
+      try {
+        saveAnalyze(
+          `./SEO/seo-analyze.json`,
+          JSON.stringify(cleanedTagsPatterns, null, 2)
+        );
+        saveAnalyze(`./SEO/seo-analyze.html`, htmlWithTablesAndCharts);
+      } catch {
+        message("Failed to create files", "red");
+        return;
+      } finally {
+        message(
+          `Your website has been analyzed, JSON and html files have been generated in ./SEO`,
+          "green"
+        );
+      }
       try {
         await open(path.join(process.cwd(), output, `seo-analyze.html`), {
           app: { name: apps.browser },
         });
       } catch {
-        message("Cannot open browser. Please open file manually", "yellow");
+        message("Cannot open browser. Please open file manually", "red");
         return;
-      } finally {
-        message(
-          `Your website has been analyzed, JSON and html files have been generated in ${config.output}`,
-          "green"
-        );
       }
     }
   };
@@ -184,15 +189,14 @@ const checkFileByPatterns = ({
               ));
 
           staticTags.forEach((staticTag) => {
+            const staticTagRegex = new RegExp(`<.*?${staticTag}.*?>`, "g");
             Object.entries(unicodeToConvert).forEach(
               ([unicode, replacement]) => {
-                const regex = new RegExp(
-                  `<${staticTag}>|<\/${staticTag}>|${unicode}`,
-                  "g"
-                );
-                text = text.replace(regex, replacement);
+                const unicodeRegex = new RegExp(`${unicode}`, "g");
+                text = text.replace(unicodeRegex, replacement);
               }
             );
+            text = text.replace(staticTagRegex, "");
           });
 
           return (tagsPatterns[file] = {
@@ -209,8 +213,13 @@ const checkFileByPatterns = ({
               multipleTags: tag !== "keywords" ? false : undefined,
               keywordsIncluded:
                 tag !== "keywords"
-                  ? keywordsArray.filter((keyword) => text.toLowerCase().includes(keyword.toLowerCase()))
+                  ? keywordsArray.filter((keyword) =>
+                      text.toLowerCase().includes(keyword.toLowerCase())
+                    )
                   : undefined,
+              forbiddenCharacters: charactersToChange.filter((char) =>
+                text.includes(char)
+              ),
             },
           });
         });
@@ -249,6 +258,10 @@ const generateTableRows = (tagsPatterns: TagsPatterns) => {
                         ? "color: black"
                         : "color: red"
                     }">${value.count}</strong>${
+                      value.forbiddenCharacters &&
+                      value.forbiddenCharacters.length > 1 &&
+                      `(<strong style="color:red">Contains forbidden words: ${value.forbiddenCharacters}</strong>)`
+                    }${
                       value.keywordsIncluded &&
                       value.keywordsIncluded.length > 0
                         ? ` | <strong style="color:green">Keywords included: ${value.keywordsIncluded}</strong>`
