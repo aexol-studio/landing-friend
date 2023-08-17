@@ -1,6 +1,11 @@
 import path from "path";
 import { ConfigFile, TagsProps } from "./config.js";
-import { getFilesToAnalyze, readFile, saveAnalyze } from "./utils.js";
+import {
+  getFilesToAnalyze,
+  matchedSetting,
+  readFile,
+  saveAnalyze,
+} from "./utils.js";
 import open, { apps } from "open";
 import { message } from "./console.js";
 
@@ -27,7 +32,7 @@ const unicodeToConvert = {
 const charactersToChange = ["！", "｜", "：", "ı", "＆"];
 
 export const websiteAnalyzer = (config: ConfigFile) => {
-  const { input, sitemap, analyzer } = config;
+  const { input, analyzer, excludedPage } = config;
   if (!analyzer) {
     return {
       analyze: async () => message("Define analyzer in config", "redBright"),
@@ -38,25 +43,8 @@ export const websiteAnalyzer = (config: ConfigFile) => {
     const allFiles = getFilesToAnalyze(input);
     let tagsPatterns: TagsPatterns = {};
 
-    const settingPerWildcard = Object.entries(
-      sitemap?.settingsPerWildcard || {}
-    ).map(([pagePattern, settings]) => ({
-      pagePattern,
-      ...settings,
-    }));
-
     allFiles.forEach((file) => {
-      const matchedSetting = settingPerWildcard.find((setting) => {
-        const regexPattern = setting.pagePattern
-          .replace(/\/$/g, ".html$")
-          .replace(/^\//g, `^\/`)
-          .replace("*/", "/")
-          .replace("/*", "/");
-
-        return file.match(new RegExp(regexPattern, "g"));
-      });
-
-      if (!matchedSetting) {
+      if (!matchedSetting(file, excludedPage.fileTypes, excludedPage.paths)) {
         checkFiles({
           file,
           tags,
@@ -346,16 +334,16 @@ ${
     toMuchTitleKeywords.length > 0
       ? toMuchDescriptionKeywords.length > 0
         ? `
-           <tr><td colspan="2"><strong style="color:red">Too Much Keywords: </strong></td></tr>
+           <tr><td colspan="2"><strong style="color:red">Too much keywords: </strong></td></tr>
            <tr><td colspan="2"><strong>Title</strong> : ${toMuchTitleKeywords}</td></tr>
            <tr><td colspan="2"><strong>Description</strong> : ${toMuchDescriptionKeywords}</td></tr>
           `
-        : `<tr><td colspan="2"><strong style="color:red">Too Much Keywords: </strong></td></tr>
+        : `<tr><td colspan="2"><strong style="color:red">Too much keywords: </strong></td></tr>
            <tr><td colspan="2"><strong>Title</strong> : ${toMuchTitleKeywords}</td></tr>
           `
       : toMuchDescriptionKeywords.length > 0
       ? `
-         <tr><td colspan="2"><strong style="color:red">Too Much Keywords: </strong></td></tr>
+         <tr><td colspan="2"><strong style="color:red">Too much keywords: </strong></td></tr>
          <tr><td colspan="2"><strong>Description</strong> : ${toMuchDescriptionKeywords}</td></tr>
         `
       : ``

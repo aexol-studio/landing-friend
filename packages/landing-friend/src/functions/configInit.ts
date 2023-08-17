@@ -10,18 +10,13 @@ import {
 import inquirer from "inquirer";
 
 export const configInit = async () => {
-  const config = await readConfig("landing-friend-config.ts");
+  const config = readConfig("landing-friend-config.ts");
   if (config) {
     message("Config already exists", "red");
     return;
   }
 
-  const directories = await inquirer.prompt<{
-    domain: string;
-    input: string;
-    output: string;
-    robots: boolean;
-  }>([
+  const directories: ConfigFile = await inquirer.prompt([
     {
       type: "input",
       name: "domain",
@@ -31,20 +26,32 @@ export const configInit = async () => {
     {
       type: "input",
       name: "input",
-      message: "Folder directory with your html files",
+      message: "Folder directory with your html files:",
       default: GLOBAL_CONFIG_FILE.input,
     },
     {
       type: "input",
       name: "output",
-      message: "Folder directory to output files",
+      message: "Folder directory to output files:",
       default: GLOBAL_CONFIG_FILE.output,
     },
     {
       type: "confirm",
       name: "robots",
-      message: "Do you want generate robots.txt",
+      message: "Do you want generate robots.txt:",
       default: GLOBAL_CONFIG_FILE.robots,
+    },
+    {
+      type: "input",
+      name: "excludedPage.fileTypes",
+      message: "File type to exclude:",
+      default: GLOBAL_CONFIG_FILE.excludedPage.fileTypes,
+    },
+    {
+      type: "input",
+      name: "excludedPage.paths",
+      message: "File paths to exclude:",
+      default: GLOBAL_CONFIG_FILE.excludedPage.paths,
     },
   ]);
   let extendResponseBySitemap: Pick<ConfigFile, "sitemap"> = {};
@@ -63,21 +70,21 @@ export const configInit = async () => {
       {
         type: "input",
         name: "sitemap.locale.defaultLocale",
-        message: "Default locale of your website",
+        message: "Default locale of your website:",
         default:
           EXTENDED_SITEMAP_GLOBAL_CONFIG_FILE.sitemap?.locale?.defaultLocale,
       },
       {
-        type: "",
+        type: "input",
         name: "sitemap.locale.localeWildcard",
-        message: "The position of the locale in the path",
+        message: "The position of the locale in the path:",
         default:
           EXTENDED_SITEMAP_GLOBAL_CONFIG_FILE.sitemap?.locale?.localeWildcard,
       },
       {
         type: "list",
         name: "sitemap.sortBy",
-        message: "Select a sitemap sorting method",
+        message: "Select a sitemap sorting method:",
         default: EXTENDED_SITEMAP_GLOBAL_CONFIG_FILE.sitemap?.sortBy,
         choices: ["priority", "alphabetically-asc", "alphabetically-desc"],
       },
@@ -87,22 +94,7 @@ export const configInit = async () => {
         message: "Whether to add / at the end of the url ?",
         default: EXTENDED_SITEMAP_GLOBAL_CONFIG_FILE.sitemap?.trailingSlash,
       },
-      {
-        type: "input",
-        name: "sitemap.settingsPerWildcard",
-        message: "Settings for specific wildcards such as exclusion/priority",
-        default: JSON.stringify(
-          EXTENDED_SITEMAP_GLOBAL_CONFIG_FILE.sitemap?.settingsPerWildcard
-        ),
-      },
     ]);
-    if (extendResponseBySitemap.sitemap?.settingsPerWildcard) {
-      extendResponseBySitemap.sitemap.settingsPerWildcard = JSON.parse(
-        JSON.parse(
-          JSON.stringify(extendResponseBySitemap.sitemap.settingsPerWildcard)
-        )
-      );
-    }
   }
   let extendResponseByAnalyzer: Pick<ConfigFile, "analyzer"> = {};
   const { extendConfigByAnalyzer } = await inquirer.prompt<{

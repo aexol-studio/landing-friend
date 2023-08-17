@@ -1,6 +1,11 @@
 import { ConfigFile } from "./config.js";
 import { messageWithContent } from "./console.js";
-import { getHtmlFiles, saveSitemap, saveOldSitemap } from "./utils.js";
+import {
+  getHtmlFiles,
+  saveSitemap,
+  saveOldSitemap,
+  matchedSetting,
+} from "./utils.js";
 import ISO from "iso-639-1";
 
 type File = {
@@ -17,14 +22,7 @@ type LocaleFile = {
 };
 
 export const sitemapGenerator = (config: ConfigFile) => {
-  const { domain, input, output, sitemap } = config;
-
-  const settingPerWildcard = Object.entries(
-    sitemap?.settingsPerWildcard || {}
-  ).map(([pagePattern, settings]) => ({
-    pagePattern,
-    ...settings,
-  }));
+  const { domain, input, output, sitemap, excludedPage } = config;
 
   const generateSitemap = () => {
     const allHtmlFiles = getHtmlFiles(input);
@@ -43,15 +41,6 @@ export const sitemapGenerator = (config: ConfigFile) => {
       .map((file) => {
         const fileWithoutIndex = file.replace(/index/g, "").replace(/\/$/g, "");
         const fileNameWithSlash = file.includes("index") ? file : file + "/";
-        const matchedSetting = settingPerWildcard.find((setting) => {
-          const regexPattern = setting.pagePattern
-            .replace(/\/$/g, "$")
-            .replace(/^\//g, `^\/`)
-            .replace("*/", "/")
-            .replace("/*", "/");
-
-          return fileWithoutIndex.match(new RegExp(regexPattern, "g"));
-        });
 
         const rest = sitemap?.trailingSlash
           ? fileWithoutIndex + "/"
@@ -64,18 +53,13 @@ export const sitemapGenerator = (config: ConfigFile) => {
               0.1
         );
 
-        if (matchedSetting) {
-          if (matchedSetting.exclude) {
-            return null;
-          } else {
-            return {
-              link: `${domain}${rest}`,
-              priority: matchedSetting.priority
-                ? matchedSetting.priority
-                : priority,
-            };
-          }
-        } else {
+        if (
+          !matchedSetting(
+            fileWithoutIndex,
+            excludedPage.fileTypes,
+            excludedPage.paths
+          )
+        ) {
           return {
             link: `${domain}${rest}`,
             priority: priority,
@@ -114,17 +98,12 @@ export const sitemapGenerator = (config: ConfigFile) => {
   };
 
   const generateRobots = () => {
-    const excludedPages = settingPerWildcard
-      .filter((setting) => setting.exclude)
-      .filter((filter) => filter.pagePattern.match(/\//g))
-      .map((page) => {
-        let pattern = page.pagePattern;
-
-        if (!pattern.startsWith("/") && !pattern.startsWith("*/")) {
-          pattern = "/" + pattern;
+    const excludedPages = excludedPage.paths
+      .map((path) => {
+        if (!path.startsWith("/") && !path.startsWith("*/")) {
+          path = "/" + path.replace(new RegExp(`^\.\/`, "g"), "");
         }
-
-        return `Disallow: ${pattern}`;
+        return `Disallow: ${path}`;
       })
       .join("\n");
 

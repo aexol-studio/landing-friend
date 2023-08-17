@@ -77,3 +77,33 @@ export const saveOldSitemap = (filePath: string, newFilePath: string) => {
     message(`Old sitemap detected. Moved to ${newFilePath}`, "green");
   }
 };
+
+export const matchedSetting = (
+  file: string,
+  fileTypes: string[],
+  paths: string[]
+) => {
+  console.log("file", file);
+  if (fileTypes.length > 0) {
+    if (fileTypes.find((type) => file.endsWith(type))) {
+      return true;
+    }
+  }
+  if (paths.length > 0) {
+    if (
+      paths.find((path) => {
+        const regexPattern = path
+          .replace(/\/$/g, "$")
+          .replace(/^\.\//g, `^\/`)
+          .replace("*/", "/")
+          .replace("/*", "/");
+        console.log("regex", regexPattern);
+
+        return file.match(new RegExp(regexPattern, "g")) !== null;
+      })
+    ) {
+      return true;
+    }
+  }
+  return false;
+};

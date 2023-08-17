@@ -3,8 +3,7 @@ import { message } from "./console.js";
 import { LanguageCode } from "iso-639-1";
 import ts from "typescript";
 
-type WildcardSettings = { priority?: number; exclude?: boolean };
-
+type ExcludeSetting = { paths: string[]; fileTypes: string[] };
 type SitemapSettings = {
   locale: {
     defaultLocale: LanguageCode;
@@ -12,7 +11,6 @@ type SitemapSettings = {
   };
   trailingSlash: boolean;
   sortBy: "priority" | "alphabetically-asc" | "alphabetically-desc";
-  settingsPerWildcard: Record<string, WildcardSettings>;
 };
 
 export type TagsProps =
@@ -45,6 +43,7 @@ export type ConfigFile = {
   input: string;
   output: string;
   robots: boolean;
+  excludedPage: ExcludeSetting;
   sitemap?: SitemapSettings;
   analyzer?: {
     tags: TagsProps;
@@ -55,6 +54,22 @@ export const GLOBAL_CONFIG_FILE: ConfigFile = {
   input: "./out",
   output: "./out",
   robots: true,
+  excludedPage: {
+    fileTypes: [
+      "json",
+      "png",
+      "jpg",
+      "svg",
+      "js",
+      "mp4",
+      "css",
+      "txt",
+      "xml",
+      "ico",
+      "webp",
+    ],
+    paths: ["404", "locales"],
+  },
 };
 export const EXTENDED_SITEMAP_GLOBAL_CONFIG_FILE: Pick<ConfigFile, "sitemap"> =
   {
@@ -65,14 +80,6 @@ export const EXTENDED_SITEMAP_GLOBAL_CONFIG_FILE: Pick<ConfigFile, "sitemap"> =
       },
       sortBy: "priority",
       trailingSlash: true,
-      settingsPerWildcard: {
-        "404": {
-          exclude: true,
-        },
-        "/assets/*": {
-          exclude: true,
-        },
-      },
     },
   };
 export const EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE: Pick<
