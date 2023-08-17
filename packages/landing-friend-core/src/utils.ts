@@ -3,32 +3,25 @@ import path from "path";
 import { message } from "./console.js";
 
 export const getHtmlFiles = (base: string) => {
-  const allFiles = getDirectories(base);
   const baseWithoutDot = base.replace(/\.\//g, "");
-  const cleanFiles = allFiles
+  return getDirectories(base)
     .map((file) => {
       const relativePath = file.replace(baseWithoutDot, "");
       return relativePath.replace(/\\/g, "/");
     })
-    .filter((file) => file.endsWith(".html") || !file.trim().includes(" "));
-
-  return cleanFiles.map((file) => file.replace(".html", ""));
+    .filter((file) => file.endsWith(".html") || file.endsWith(".php"))
+    .map((file) => file.replace(".html", ""));
 };
 
 export const getFilesToAnalyze = (base: string) => {
-  const allFiles = getDirectories(base);
-
-  const cleanFiles = allFiles
+  return getDirectories(base)
     .map((file) => file.replace(/\\/g, "/"))
-    .filter((file) => file.endsWith(".html"));
-
-  const filesToOpen = cleanFiles.map((file) => {
-    const relativePath = file.replace(/\\/g, "/");
-    const pathToFileOpen = path.join(process.cwd(), relativePath);
-    return pathToFileOpen;
-  });
-
-  return filesToOpen;
+    .filter((file) => file.endsWith(".html") || file.endsWith(".php"))
+    .map((file) => {
+      const relativePath = file.replace(/\\/g, "/");
+      const pathToFileOpen = path.join(process.cwd(), relativePath);
+      return pathToFileOpen;
+    });
 };
 
 export const getDirectories = (dir: string, fileList = [] as string[]) => {
@@ -80,24 +73,33 @@ export const saveOldSitemap = (filePath: string, newFilePath: string) => {
 
 export const matchedSetting = (
   file: string,
-  fileTypes: string[],
-  paths: string[]
+  paths: string[],
+  input?: string
 ) => {
-  console.log("file", file);
-  if (fileTypes.length > 0) {
-    if (fileTypes.find((type) => file.endsWith(type))) {
-      return true;
-    }
+  if (input) {
+    const fileWithoutIndex = file
+      .replace(".html", "")
+      .replace("index", "")
+      .replace(process.cwd() + input.replace("./", "/"), "");
+    file = fileWithoutIndex.endsWith("/")
+      ? fileWithoutIndex
+      : fileWithoutIndex + "/";
   }
+  {
+    file = file.endsWith("/") ? file : file + "/";
+  }
+
+  console.log("file", file);
+
   if (paths.length > 0) {
     if (
       paths.find((path) => {
         const regexPattern = path
-          .replace(/\/$/g, "$")
+          .replace(/\/$/g, "/$")
           .replace(/^\.\//g, `^\/`)
           .replace("*/", "/")
           .replace("/*", "/");
-        console.log("regex", regexPattern);
+        console.log(regexPattern);
 
         return file.match(new RegExp(regexPattern, "g")) !== null;
       })

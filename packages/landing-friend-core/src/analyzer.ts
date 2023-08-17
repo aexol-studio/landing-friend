@@ -41,10 +41,11 @@ export const websiteAnalyzer = (config: ConfigFile) => {
   const tags = analyzer.tags;
   const analyze = async () => {
     const allFiles = getFilesToAnalyze(input);
+
     let tagsPatterns: TagsPatterns = {};
 
     allFiles.forEach((file) => {
-      if (!matchedSetting(file, excludedPage.fileTypes, excludedPage.paths)) {
+      if (!matchedSetting(file, excludedPage, input)) {
         checkFiles({
           file,
           tags,

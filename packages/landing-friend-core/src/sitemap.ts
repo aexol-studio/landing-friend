@@ -53,13 +53,7 @@ export const sitemapGenerator = (config: ConfigFile) => {
               0.1
         );
 
-        if (
-          !matchedSetting(
-            fileWithoutIndex,
-            excludedPage.fileTypes,
-            excludedPage.paths
-          )
-        ) {
+        if (!matchedSetting(fileWithoutIndex, excludedPage)) {
           return {
             link: `${domain}${rest}`,
             priority: priority,
@@ -98,7 +92,7 @@ export const sitemapGenerator = (config: ConfigFile) => {
   };
 
   const generateRobots = () => {
-    const excludedPages = excludedPage.paths
+    const excludedPages = excludedPage
       .map((path) => {
         if (!path.startsWith("/") && !path.startsWith("*/")) {
           path = "/" + path.replace(new RegExp(`^\.\/`, "g"), "");

@@ -3,7 +3,6 @@ import { message } from "./console.js";
 import { LanguageCode } from "iso-639-1";
 import ts from "typescript";
 
-type ExcludeSetting = { paths: string[]; fileTypes: string[] };
 type SitemapSettings = {
   locale: {
     defaultLocale: LanguageCode;
@@ -43,7 +42,7 @@ export type ConfigFile = {
   input: string;
   output: string;
   robots: boolean;
-  excludedPage: ExcludeSetting;
+  excludedPage: string[];
   sitemap?: SitemapSettings;
   analyzer?: {
     tags: TagsProps;
@@ -54,22 +53,7 @@ export const GLOBAL_CONFIG_FILE: ConfigFile = {
   input: "./out",
   output: "./out",
   robots: true,
-  excludedPage: {
-    fileTypes: [
-      "json",
-      "png",
-      "jpg",
-      "svg",
-      "js",
-      "mp4",
-      "css",
-      "txt",
-      "xml",
-      "ico",
-      "webp",
-    ],
-    paths: ["404", "locales"],
-  },
+  excludedPage: ["*/404/"],
 };
 export const EXTENDED_SITEMAP_GLOBAL_CONFIG_FILE: Pick<ConfigFile, "sitemap"> =
   {

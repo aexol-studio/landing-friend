@@ -43,15 +43,9 @@ export const configInit = async () => {
     },
     {
       type: "input",
-      name: "excludedPage.fileTypes",
-      message: "File type to exclude:",
-      default: GLOBAL_CONFIG_FILE.excludedPage.fileTypes,
-    },
-    {
-      type: "input",
-      name: "excludedPage.paths",
+      name: "excludedPage",
       message: "File paths to exclude:",
-      default: GLOBAL_CONFIG_FILE.excludedPage.paths,
+      default: GLOBAL_CONFIG_FILE.excludedPage,
     },
   ]);
   let extendResponseBySitemap: Pick<ConfigFile, "sitemap"> = {};
