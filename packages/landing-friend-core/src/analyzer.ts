@@ -321,38 +321,49 @@ const generateTableRows = (tagsPatterns: TagsPatterns) => {
       </thead>
       <tbody>
       ${rows}
-      ${
-        (h1Keywords.length > 0 && missingTitleKeywords.length > 0) ||
-        (h1Keywords.length > 0 && missingDescriptionKeywords.length > 0)
-          ? `<tr><td colspan="2"><strong style="color:red">Missing Keywords: </strong></td></tr>`
-          : ``
-      }
-      ${
-        h1Keywords.length > 0 && missingTitleKeywords.length > 0
-          ? `<tr><td colspan="2"><strong>title</strong> : ${missingTitleKeywords}</td></tr>`
-          : ``
-      }
-       ${
-         h1Keywords.length > 0 && missingDescriptionKeywords.length > 0
-           ? `<tr><td colspan="2"><strong>description</strong> : ${missingDescriptionKeywords}</td></tr>`
-           : ``
-       }
-      ${
-        (h1Keywords.length > 0 && toMuchTitleKeywords.length > 0) ||
-        (h1Keywords.length > 0 && toMuchDescriptionKeywords.length > 0)
-          ? `<tr><td colspan="2"><strong style="color:red">Too Much Keywords: </strong></td></tr>`
-          : ``
-      }
-      ${
-        h1Keywords.length > 0 && toMuchTitleKeywords.length > 0
-          ? `<tr><td colspan="2"><strong>title</strong> : ${toMuchTitleKeywords}</td></tr>`
-          : ``
-      }
-       ${
-         h1Keywords.length > 0 && toMuchDescriptionKeywords.length > 0
-           ? `<tr><td colspan="2"><strong>description</strong> : ${toMuchDescriptionKeywords}</td></tr>`
-           : ``
-       }
+${
+  h1Keywords.length > 0
+    ? `
+  ${
+    missingTitleKeywords.length > 0
+      ? missingDescriptionKeywords.length > 0
+        ? `
+           <tr><td colspan="2"><strong style="color:red">Missing keywords: </strong></td></tr>
+           <tr><td colspan="2"><strong>Title</strong> : ${missingTitleKeywords}</td></tr>
+           <tr><td colspan="2"><strong>Description</strong> : ${missingDescriptionKeywords}</td></tr>
+          `
+        : `<tr><td colspan="2"><strong style="color:red">Missing keywords: </strong></td></tr>
+           <tr><td colspan="2"><strong>Title</strong> : ${missingTitleKeywords}</td></tr>
+          `
+      : missingDescriptionKeywords.length > 0
+      ? `
+         <tr><td colspan="2"><strong style="color:red">Missing keywords: </strong></td></tr>
+         <tr><td colspan="2"><strong>Description</strong> : ${missingDescriptionKeywords}</td></tr>
+        `
+      : ``
+  }
+  ${
+    toMuchTitleKeywords.length > 0
+      ? toMuchDescriptionKeywords.length > 0
+        ? `
+           <tr><td colspan="2"><strong style="color:red">Too Much Keywords: </strong></td></tr>
+           <tr><td colspan="2"><strong>Title</strong> : ${toMuchTitleKeywords}</td></tr>
+           <tr><td colspan="2"><strong>Description</strong> : ${toMuchDescriptionKeywords}</td></tr>
+          `
+        : `<tr><td colspan="2"><strong style="color:red">Too Much Keywords: </strong></td></tr>
+           <tr><td colspan="2"><strong>Title</strong> : ${toMuchTitleKeywords}</td></tr>
+          `
+      : toMuchDescriptionKeywords.length > 0
+      ? `
+         <tr><td colspan="2"><strong style="color:red">Too Much Keywords: </strong></td></tr>
+         <tr><td colspan="2"><strong>Description</strong> : ${toMuchDescriptionKeywords}</td></tr>
+        `
+      : ``
+  }
+  
+  `
+    : ``
+}
       </tbody>
      <tr class="empty-row"></tr>
       `;
