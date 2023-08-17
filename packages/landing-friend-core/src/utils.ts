@@ -89,8 +89,6 @@ export const matchedSetting = (
     file = file.endsWith("/") ? file : file + "/";
   }
 
-  console.log("file", file);
-
   if (paths.length > 0) {
     if (
       paths.find((path) => {
@@ -99,8 +97,6 @@ export const matchedSetting = (
           .replace(/^\.\//g, `^\/`)
           .replace("*/", "/")
           .replace("/*", "/");
-        console.log(regexPattern);
-
         return file.match(new RegExp(regexPattern, "g")) !== null;
       })
     ) {
