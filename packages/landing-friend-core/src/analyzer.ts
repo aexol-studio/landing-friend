@@ -17,12 +17,14 @@ type TagsWithReason = {
   forbiddenCharacters?: string[];
 };
 
+type KeywordsTagsProps = Record<string, string[]>;
+
 const staticTags = ["strong", "em", "span", "br"];
 const unicodeToConvert = {
   "&#x27;": "'",
   "&amp;": "&",
 };
-const charactersToChange = ["！", "｜", "：", "ı"];
+const charactersToChange = ["！", "｜", "：", "ı", "＆"];
 
 export const websiteAnalyzer = (config: ConfigFile) => {
   const { input, sitemap, analyzer } = config;
@@ -199,6 +201,10 @@ const checkFileByPatterns = ({
             text = text.replace(staticTagRegex, "");
           });
 
+          const forbiddenCharacters = charactersToChange.filter((char) =>
+            text.includes(char)
+          );
+
           return (tagsPatterns[file] = {
             ...tagsPatterns[file],
             [tag]: {
@@ -217,9 +223,10 @@ const checkFileByPatterns = ({
                       text.toLowerCase().includes(keyword.toLowerCase())
                     )
                   : undefined,
-              forbiddenCharacters: charactersToChange.filter((char) =>
-                text.includes(char)
-              ),
+              forbiddenCharacters:
+                forbiddenCharacters.length > 0
+                  ? forbiddenCharacters
+                  : undefined,
             },
           });
         });
@@ -242,6 +249,32 @@ const checkFileByPatterns = ({
 const generateTableRows = (tagsPatterns: TagsPatterns) => {
   return Object.entries(tagsPatterns)
     .map(([file, tagData]) => {
+      let keywordsToTags: KeywordsTagsProps = {};
+      Object.entries(tagData).forEach(([tag, value]) => {
+        if (tag !== "keywords" && value.keywordsIncluded) {
+          keywordsToTags[tag] = value.keywordsIncluded;
+        }
+      });
+      const h1Keywords = keywordsToTags.h1 || [];
+      const titleKeywords = keywordsToTags.title || [];
+      const descriptionKeywords = keywordsToTags.description || [];
+
+      const missingTitleKeywords = h1Keywords.filter(
+        (keyword) => !titleKeywords.includes(keyword)
+      );
+
+      const missingDescriptionKeywords = h1Keywords.filter(
+        (keyword) => !descriptionKeywords.includes(keyword)
+      );
+
+      const toMuchTitleKeywords = titleKeywords.filter(
+        (keyword) => !h1Keywords.includes(keyword)
+      );
+
+      const toMuchDescriptionKeywords = descriptionKeywords.filter(
+        (keyword) => !h1Keywords.includes(keyword)
+      );
+
       const rows = Object.entries(tagData)
         .map(([tag, value]) => {
           return `
@@ -260,7 +293,7 @@ const generateTableRows = (tagsPatterns: TagsPatterns) => {
                     }">${value.count}</strong>${
                       value.forbiddenCharacters &&
                       value.forbiddenCharacters.length > 0
-                        ? ` (<strong style="color:red">Contains forbidden words: ${value.forbiddenCharacters}</strong>)`
+                        ? `<strong style="color:red">&nbsp;(Contains forbidden words: ${value.forbiddenCharacters})</strong>`
                         : ``
                     }${
                       value.keywordsIncluded &&
@@ -276,6 +309,7 @@ const generateTableRows = (tagsPatterns: TagsPatterns) => {
                 : `<td>List of <strong>${tag}</strong>: <strong>${value.content}</strong></td><td></td>`
               : `<td>Length of <strong>${tag}</strong>: <strong style="color: red">No characters detected</strong></td><td width="20%"><strong style="color: red">${value.requirement}</strong></td>`
           }
+          </tr>
           `;
         })
         .join("");
@@ -285,7 +319,41 @@ const generateTableRows = (tagsPatterns: TagsPatterns) => {
       <th colspan="2">${file}</th>
       </tr>
       </thead>
+      <tbody>
       ${rows}
+      ${
+        (h1Keywords.length > 0 && missingTitleKeywords.length > 0) ||
+        (h1Keywords.length > 0 && missingDescriptionKeywords.length > 0)
+          ? `<tr><td colspan="2"><strong style="color:red">Missing Keywords: </strong></td></tr>`
+          : ``
+      }
+      ${
+        h1Keywords.length > 0 && missingTitleKeywords.length > 0
+          ? `<tr><td colspan="2"><strong>title</strong> : ${missingTitleKeywords}</td></tr>`
+          : ``
+      }
+       ${
+         h1Keywords.length > 0 && missingDescriptionKeywords.length > 0
+           ? `<tr><td colspan="2"><strong>description</strong> : ${missingDescriptionKeywords}</td></tr>`
+           : ``
+       }
+      ${
+        (h1Keywords.length > 0 && toMuchTitleKeywords.length > 0) ||
+        (h1Keywords.length > 0 && toMuchDescriptionKeywords.length > 0)
+          ? `<tr><td colspan="2"><strong style="color:red">Too Much Keywords: </strong></td></tr>`
+          : ``
+      }
+      ${
+        h1Keywords.length > 0 && toMuchTitleKeywords.length > 0
+          ? `<tr><td colspan="2"><strong>title</strong> : ${toMuchTitleKeywords}</td></tr>`
+          : ``
+      }
+       ${
+         h1Keywords.length > 0 && toMuchDescriptionKeywords.length > 0
+           ? `<tr><td colspan="2"><strong>description</strong> : ${toMuchDescriptionKeywords}</td></tr>`
+           : ``
+       }
+      </tbody>
      <tr class="empty-row"></tr>
       `;
     })
