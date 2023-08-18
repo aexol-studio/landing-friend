@@ -32,6 +32,11 @@ export type TagsProps =
       };
     }
   | {
+      lastSentence: {
+        countWords: boolean;
+      };
+    }
+  | {
       keywords: {
         countKeywords: boolean;
       };
@@ -84,6 +89,7 @@ export const EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE: Pick<
         maxLength: 200,
         minLength: 50,
       },
+      lastSentence:{countWords:true},
       keywords: { countKeywords: true },
     },
   },
@@ -101,10 +107,11 @@ export const readConfig = (filePath: string): ConfigFile | undefined => {
   try {
     const configFileText = fs
       .readFileSync(filePath, "utf8")
+      .replace(/\'/g, `"`)
       .replace(`import { ConfigFile } from "@landing-friend/core";`, "")
       .replace("export const GLOBAL_CONFIG_FILE: ConfigFile = ", "")
       .replace(";", "")
-      .replace(`'`, `"`)
+
       .trim();
 
     const config = ts.parseConfigFileTextToJson(filePath, configFileText)

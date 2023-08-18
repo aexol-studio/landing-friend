@@ -14,6 +14,8 @@ type TagsPatterns = Record<string, Record<string, TagsWithReason>>;
 type TagsWithReason = {
   minLength?: number;
   maxLength?: number;
+  countKeywords?: boolean;
+  countWords?: boolean;
   content?: string;
   requirement?: string;
   count: number;
@@ -24,7 +26,7 @@ type TagsWithReason = {
 
 type KeywordsTagsProps = Record<string, string[]>;
 
-const staticTags = ["strong", "em", "span", "br"];
+const staticTags = ["strong", "em", "span", "br", "style", "p"];
 const unicodeToConvert = {
   "&#x27;": "'",
   "&amp;": "&",
@@ -38,11 +40,27 @@ export const websiteAnalyzer = (config: ConfigFile) => {
       analyze: async () => message("Define analyzer in config", "redBright"),
     };
   }
-  const tags = analyzer.tags;
+  const tags: TagsProps = analyzer.tags;
   const analyze = async () => {
     const allFiles = getFilesToAnalyze(input);
 
     let tagsPatterns: TagsPatterns = {};
+    let countKeywords: boolean = true;
+    let countWords: boolean = true;
+    if (
+      Object.entries(analyzer.tags).some(
+        ([tag, value]) => tag === "keywords" && value.countKeywords !== true
+      )
+    ) {
+      countKeywords = false;
+    }
+    if (
+      Object.entries(analyzer.tags).some(
+        ([tag, value]) => tag === "lastSentence" && value.countWords !== true
+      )
+    ) {
+      countWords = false;
+    }
 
     allFiles.forEach((file) => {
       if (!matchedSetting(file, excludedPage, input)) {
@@ -50,6 +68,8 @@ export const websiteAnalyzer = (config: ConfigFile) => {
           file,
           tags,
           tagsPatterns,
+          countKeywords,
+          countWords,
         });
       }
     });
@@ -63,12 +83,15 @@ export const websiteAnalyzer = (config: ConfigFile) => {
       Object.entries(tagsPatterns).forEach(([file, tagData]) => {
         cleanedTagsPatterns[file] = {};
         Object.entries(tagData).forEach(([tag, value]) => {
-          cleanedTagsPatterns[file][tag] = {
-            ...value,
-            requirement:
-              value.requirement &&
-              value.requirement.replace(/<\/?strong>/g, ""),
-          };
+          !(tag === "keywords" && !value.countKeywords) &&
+          !(tag === "lastSentence" && !value.countWords)
+            ? (cleanedTagsPatterns[file][tag] = {
+                ...value,
+                requirement:
+                  value.requirement &&
+                  value.requirement.replace(/<\/?strong>/gs, ""),
+              })
+            : undefined;
         });
       });
       try {
@@ -103,13 +126,24 @@ const checkFiles = ({
   file,
   tags,
   tagsPatterns,
+  countKeywords,
+  countWords,
 }: {
   file: string;
   tags: TagsProps;
   tagsPatterns: TagsPatterns;
+  countKeywords: boolean;
+  countWords: boolean;
 }) => {
   const fileContent = readFile(file);
-  checkFileByPatterns({ file, fileContent, tags, tagsPatterns });
+  checkFileByPatterns({
+    file,
+    fileContent,
+    tags,
+    tagsPatterns,
+    countKeywords,
+    countWords,
+  });
 };
 
 const checkFileByPatterns = ({
@@ -117,73 +151,113 @@ const checkFileByPatterns = ({
   fileContent,
   tags,
   tagsPatterns,
+  countKeywords,
+  countWords,
 }: {
   file: string;
   fileContent: string;
   tags: TagsProps;
   tagsPatterns: TagsPatterns;
+  countKeywords: boolean;
+  countWords: boolean;
 }) => {
   Object.entries(tags).forEach(([tag, value]) => {
     let regex: RegExp;
-    const keywordsMatch = fileContent.match(
-      new RegExp(`<meta property="keywords" content="(.*?)"`, "g")
-    );
+    let keywordsArray: string[] | undefined = [];
+    if (countKeywords) {
+      const keywordsMatch = fileContent.match(
+        new RegExp(`<meta property="keywords" content="(.*?)"`, "gs")
+      );
 
-    const keywordsArray: string[] = [];
+      if (keywordsMatch && keywordsMatch.length > 0) {
+        const contentMatch = keywordsMatch[0].match(/content="(.*?)"/);
 
-    if (keywordsMatch && keywordsMatch.length > 0) {
-      const contentMatch = keywordsMatch[0].match(/content="(.*?)"/);
+        if (contentMatch && contentMatch[1]) {
+          const keywords = contentMatch[1].split(", ");
+          keywords.forEach((keyword) => {
+            keywordsArray && keywordsArray.push(keyword.trim());
+          });
+        }
+      } else keywordsArray = undefined;
+    } else keywordsArray = undefined;
 
-      if (contentMatch && contentMatch[1]) {
-        const keywords = contentMatch[1].split(", ");
-        keywords.forEach((keyword) => {
-          keywordsArray.push(keyword.trim());
-        });
-      }
+    if (tag === "description") {
+      regex = new RegExp(`<meta name="description" content="(.*?)"`, "gs");
+    } else if (
+      typeof value === "object" &&
+      "countKeywords" in value &&
+      value.countKeywords &&
+      tag === "keywords"
+    ) {
+      regex = new RegExp(`<meta property="keywords" content="(.*?)"`, "gs");
+    } else if (
+      typeof value === "object" &&
+      "countWords" in value &&
+      value.countWords &&
+      tag === "lastSentence"
+    ) {
+      regex = new RegExp(`<div.*?>(.*?)<\/div>`, "gs");
+    } else {
+      regex = new RegExp(`<${tag}.*?>(.*?)</${tag}>`, "gs");
     }
 
-    tag === "description"
-      ? (regex = new RegExp(`<meta name="description" content="(.*?)"`, "g"))
-      : tag === "keywords"
-      ? (regex = new RegExp(`<meta property="keywords" content="(.*?)"`, "g"))
-      : (regex = new RegExp(`<${tag}.*?>(.*?)</${tag}>`, "g"));
-
-    const matches = fileContent.match(regex);
+    let matches = fileContent.match(regex);
+    if (tag === "lastSentence" && matches) {
+      matches = [matches[matches.length - 1]];
+      // new regex (?<=<span.*?>)(.*)(?=<\/span>)
+    }
 
     if (matches) {
       if (matches.length > 1) {
         return (tagsPatterns[file] = {
           ...tagsPatterns[file],
           [tag]: {
+            ...value,
             requirement: `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
             count: matches.length,
             multipleTags: true,
+            countKeywords,
+            countWords,
           },
         });
       } else {
         matches.forEach((match) => {
           let text: string;
 
-          tag === "description"
-            ? (text = match.replace(
-                /<meta name="description" content="|\"$/g,
-                ""
-              ))
-            : tag === "keywords"
-            ? (text = match.replace(
-                /<meta property="keywords" content="|\"$/g,
-                ""
-              ))
-            : (text = match.replace(
-                new RegExp(`^<${tag}.*?>|</${tag}>$`, "g"),
-                ""
-              ));
+          if (tag === "description") {
+            text = match.replace(
+              /<meta name="description" content="|\"$/gs,
+              ""
+            );
+          } else if (
+            typeof value === "object" &&
+            "countKeywords" in value &&
+            value.countKeywords &&
+            tag === "keywords"
+          ) {
+            text = match.replace(
+              /<meta property="keywords" content="|\"$/gs,
+              ""
+            );
+          } else if (
+            typeof value === "object" &&
+            "countWords" in value &&
+            value.countWords &&
+            tag === "lastSentence"
+          ) {
+            text = match.replace(new RegExp(`^<div.*?>|</div>$`, "gs"), "");
+          } else {
+            text = match.replace(
+              new RegExp(`^<${tag}.*?>|</${tag}>$`, "gs"),
+              ""
+            );
+          }
 
           staticTags.forEach((staticTag) => {
-            const staticTagRegex = new RegExp(`<.*?${staticTag}.*?>`, "g");
+            const staticTagRegex = new RegExp(`<.*?${staticTag}.*?>`, "gs");
             Object.entries(unicodeToConvert).forEach(
               ([unicode, replacement]) => {
-                const unicodeRegex = new RegExp(`${unicode}`, "g");
+                const unicodeRegex = new RegExp(`${unicode}`, "gs");
                 text = text.replace(unicodeRegex, replacement);
               }
             );
@@ -197,6 +271,7 @@ const checkFileByPatterns = ({
           return (tagsPatterns[file] = {
             ...tagsPatterns[file],
             [tag]: {
+              ...value,
               maxLength: tag !== "keywords" ? value.maxLength : undefined,
               minLength: tag !== "keywords" ? value.minLength : undefined,
               requirement:
@@ -207,8 +282,9 @@ const checkFileByPatterns = ({
               content: text,
               multipleTags: tag !== "keywords" ? false : undefined,
               keywordsIncluded:
-                tag !== "keywords"
-                  ? keywordsArray.filter((keyword) =>
+                tag !== "keywords" || countKeywords
+                  ? keywordsArray &&
+                    keywordsArray.filter((keyword) =>
                       text.toLowerCase().includes(keyword.toLowerCase())
                     )
                   : undefined,
@@ -216,6 +292,8 @@ const checkFileByPatterns = ({
                 forbiddenCharacters.length > 0
                   ? forbiddenCharacters
                   : undefined,
+              countKeywords,
+              countWords,
             },
           });
         });
@@ -224,11 +302,14 @@ const checkFileByPatterns = ({
       return (tagsPatterns[file] = {
         ...tagsPatterns[file],
         [tag]: {
+          ...value,
           requirement:
             tag === "keywords"
               ? `At least one keyword required`
               : `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
           count: NaN,
+          countKeywords,
+          countWords,
         },
       });
     }
@@ -240,7 +321,11 @@ const generateTableRows = (tagsPatterns: TagsPatterns) => {
     .map(([file, tagData]) => {
       let keywordsToTags: KeywordsTagsProps = {};
       Object.entries(tagData).forEach(([tag, value]) => {
-        if (tag !== "keywords" && value.keywordsIncluded) {
+        if (
+          tag !== "keywords" &&
+          value.keywordsIncluded &&
+          tagData["keywords"].countKeywords
+        ) {
           keywordsToTags[tag] = value.keywordsIncluded;
         }
       });
@@ -270,33 +355,46 @@ const generateTableRows = (tagsPatterns: TagsPatterns) => {
           <tbody>
       <tr>
           ${
-            !isNaN(value.count)
-              ? value.maxLength && value.minLength
-                ? value.multipleTags
-                  ? `<td><strong style="color: red">Warning! Number of ${tag} on the page: ${value.count}</strong></td><td width="20%"><strong style="color: red">Check the code</strong></td>`
-                  : `<td>Length of <strong>${tag}</strong>: <strong style="${
-                      value.count >= value.minLength &&
-                      value.count <= value.maxLength
-                        ? "color: black"
-                        : "color: red"
-                    }">${value.count}</strong>${
-                      value.forbiddenCharacters &&
-                      value.forbiddenCharacters.length > 0
-                        ? `<strong style="color:red">&nbsp;(Contains forbidden words: ${value.forbiddenCharacters})</strong>`
-                        : ``
-                    }${
-                      value.keywordsIncluded &&
-                      value.keywordsIncluded.length > 0
-                        ? ` | <strong style="color:green">Keywords included: ${value.keywordsIncluded}</strong>`
-                        : ` | <strong style="color:red">Does not contain keywords</strong>`
-                    }</td><td width="20%"><span style="${
-                      value.count >= value.minLength &&
-                      value.count <= value.maxLength
-                        ? "color: black"
-                        : "color: red"
-                    }">${value.requirement}</span></td>`
-                : `<td>List of <strong>${tag}</strong>: <strong>${value.content}</strong></td><td></td>`
-              : `<td>Length of <strong>${tag}</strong>: <strong style="color: red">No characters detected</strong></td><td width="20%"><strong style="color: red">${value.requirement}</strong></td>`
+            !(tag === "keywords" && !value.countKeywords)
+              ? !(tag === "lastSentence" && !value.countWords)
+                ? !isNaN(value.count)
+                  ? value.maxLength && value.minLength
+                    ? value.multipleTags
+                      ? `<td><strong style="color: red">Warning! Number of ${tag} on the page: ${value.count}</strong></td><td width="20%"><strong style="color: red">Check the code</strong></td>`
+                      : `<td>Length of <strong>${tag}</strong>: <strong style="${
+                          value.count >= value.minLength &&
+                          value.count <= value.maxLength
+                            ? "color: black"
+                            : "color: red"
+                        }">${value.count}</strong>${
+                          value.forbiddenCharacters &&
+                          value.forbiddenCharacters.length > 0
+                            ? `<strong style="color:red">&nbsp;(Contains forbidden words: ${value.forbiddenCharacters})</strong>`
+                            : ``
+                        }${
+                          value.keywordsIncluded
+                            ? value.keywordsIncluded.length > 0
+                              ? ` | <strong style="color:green">Keywords included: ${value.keywordsIncluded}</strong>`
+                              : ` | <strong style="color:red">Does not contain keywords</strong>`
+                            : ``
+                        }</td><td width="20%"><span style="${
+                          value.count >= value.minLength &&
+                          value.count <= value.maxLength
+                            ? "color: black"
+                            : "color: red"
+                        }">${value.requirement}</span></td>`
+                    : `<td>List of <strong>${tag}</strong>: <strong>${value.content}</strong></td><td></td>`
+                  : `<td>${
+                      tag !== "keywords" ? `Length of ` : `List of `
+                    }<strong>${tag}</strong>: <strong style="color: red">${
+                      tag !== "keywords"
+                        ? `No characters detected`
+                        : `No words detected`
+                    }</strong></td><td width="20%"><strong style="color: red">${
+                      value.requirement
+                    }</strong></td>`
+                : ``
+              : ``
           }
           </tr>
           `;

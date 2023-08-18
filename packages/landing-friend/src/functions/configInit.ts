@@ -165,6 +165,18 @@ export const configInit = async () => {
       },
       {
         type: "confirm",
+        name: "analyzer.tags.lastSentence.countWords",
+        message: "Do you want to check for matching keywords in last the div?",
+        default:
+          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer?.tags instanceof
+            Object &&
+          "lastSentence" in
+            EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.tags &&
+          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.tags.lastSentence
+            .countWords,
+      },
+      {
+        type: "confirm",
         name: "analyzer.tags.keywords.countKeywords",
         message: "Do you want to count keywords?",
         default:
