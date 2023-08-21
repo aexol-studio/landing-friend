@@ -15,7 +15,7 @@ type TagsWithReason = {
   minLength?: number;
   maxLength?: number;
   countKeywords?: boolean;
-  countWords?: boolean;
+  countWordsInLast?: boolean;
   content?: string;
   requirement?: string;
   count: number;
@@ -26,7 +26,7 @@ type TagsWithReason = {
 
 type KeywordsTagsProps = Record<string, string[]>;
 
-const staticTags = ["strong", "em", "span", "br", "style", "p"];
+const staticTags = ["strong", "em", "span", "br", "style", "p", "div"];
 const unicodeToConvert = {
   "&#x27;": "'",
   "&amp;": "&",
@@ -46,7 +46,7 @@ export const websiteAnalyzer = (config: ConfigFile) => {
 
     let tagsPatterns: TagsPatterns = {};
     let countKeywords: boolean = true;
-    let countWords: boolean = true;
+    let countWordsInLast: boolean = true;
     if (
       Object.entries(analyzer.tags).some(
         ([tag, value]) => tag === "keywords" && value.countKeywords !== true
@@ -56,10 +56,11 @@ export const websiteAnalyzer = (config: ConfigFile) => {
     }
     if (
       Object.entries(analyzer.tags).some(
-        ([tag, value]) => tag === "lastSentence" && value.countWords !== true
+        ([tag, value]) =>
+          tag === "lastSentence" && value.countWordsInLast !== true
       )
     ) {
-      countWords = false;
+      countWordsInLast = false;
     }
 
     allFiles.forEach((file) => {
@@ -69,7 +70,7 @@ export const websiteAnalyzer = (config: ConfigFile) => {
           tags,
           tagsPatterns,
           countKeywords,
-          countWords,
+          countWordsInLast,
         });
       }
     });
@@ -84,12 +85,20 @@ export const websiteAnalyzer = (config: ConfigFile) => {
         cleanedTagsPatterns[file] = {};
         Object.entries(tagData).forEach(([tag, value]) => {
           !(tag === "keywords" && !value.countKeywords) &&
-          !(tag === "lastSentence" && !value.countWords)
+          !(tag === "lastSentence" && !value.countWordsInLast)
             ? (cleanedTagsPatterns[file][tag] = {
-                ...value,
                 requirement:
                   value.requirement &&
                   value.requirement.replace(/<\/?strong>/gs, ""),
+                count: value.count,
+                content: value.content,
+                forbiddenCharacters: value.forbiddenCharacters,
+                keywordsIncluded:
+                  tag !== "keywords" ? value.keywordsIncluded : undefined,
+                countKeywords:
+                  tag === "keywords" ? value.countKeywords : undefined,
+                countWordsInLast:
+                  tag === "lastSentence" ? value.countWordsInLast : undefined,
               })
             : undefined;
         });
@@ -127,13 +136,13 @@ const checkFiles = ({
   tags,
   tagsPatterns,
   countKeywords,
-  countWords,
+  countWordsInLast,
 }: {
   file: string;
   tags: TagsProps;
   tagsPatterns: TagsPatterns;
   countKeywords: boolean;
-  countWords: boolean;
+  countWordsInLast: boolean;
 }) => {
   const fileContent = readFile(file);
   checkFileByPatterns({
@@ -142,26 +151,28 @@ const checkFiles = ({
     tags,
     tagsPatterns,
     countKeywords,
-    countWords,
+    countWordsInLast,
   });
 };
 
 const checkFileByPatterns = ({
   file,
-  fileContent,
+  fileContent: _fileContent,
   tags,
   tagsPatterns,
   countKeywords,
-  countWords,
+  countWordsInLast,
 }: {
   file: string;
   fileContent: string;
   tags: TagsProps;
   tagsPatterns: TagsPatterns;
   countKeywords: boolean;
-  countWords: boolean;
+  countWordsInLast: boolean;
 }) => {
   Object.entries(tags).forEach(([tag, value]) => {
+    let fileContent = _fileContent.replace(/\n\s*/g, " ");
+
     let regex: RegExp;
     let keywordsArray: string[] | undefined = [];
     if (countKeywords) {
@@ -192,8 +203,8 @@ const checkFileByPatterns = ({
       regex = new RegExp(`<meta property="keywords" content="(.*?)"`, "gs");
     } else if (
       typeof value === "object" &&
-      "countWords" in value &&
-      value.countWords &&
+      "countWordsInLast" in value &&
+      value.countWordsInLast &&
       tag === "lastSentence"
     ) {
       regex = new RegExp(`<div.*?>(.*?)<\/div>`, "gs");
@@ -204,7 +215,6 @@ const checkFileByPatterns = ({
     let matches = fileContent.match(regex);
     if (tag === "lastSentence" && matches) {
       matches = [matches[matches.length - 1]];
-      // new regex (?<=<span.*?>)(.*)(?=<\/span>)
     }
 
     if (matches) {
@@ -217,7 +227,7 @@ const checkFileByPatterns = ({
             count: matches.length,
             multipleTags: true,
             countKeywords,
-            countWords,
+            countWordsInLast,
           },
         });
       } else {
@@ -241,8 +251,8 @@ const checkFileByPatterns = ({
             );
           } else if (
             typeof value === "object" &&
-            "countWords" in value &&
-            value.countWords &&
+            "countWordsInLast" in value &&
+            value.countWordsInLast &&
             tag === "lastSentence"
           ) {
             text = match.replace(new RegExp(`^<div.*?>|</div>$`, "gs"), "");
@@ -254,13 +264,17 @@ const checkFileByPatterns = ({
           }
 
           staticTags.forEach((staticTag) => {
-            const staticTagRegex = new RegExp(`<.*?${staticTag}.*?>`, "gs");
+            const staticTagRegex = new RegExp(
+              `<${staticTag}.*?>|<\/${staticTag}>`,
+              "gs"
+            );
             Object.entries(unicodeToConvert).forEach(
               ([unicode, replacement]) => {
                 const unicodeRegex = new RegExp(`${unicode}`, "gs");
                 text = text.replace(unicodeRegex, replacement);
               }
             );
+
             text = text.replace(staticTagRegex, "");
           });
 
@@ -280,7 +294,7 @@ const checkFileByPatterns = ({
                   : `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
               count: text.length,
               content: text,
-              multipleTags: tag !== "keywords" ? false : undefined,
+              multipleTags: undefined,
               keywordsIncluded:
                 tag !== "keywords" || countKeywords
                   ? keywordsArray &&
@@ -293,7 +307,7 @@ const checkFileByPatterns = ({
                   ? forbiddenCharacters
                   : undefined,
               countKeywords,
-              countWords,
+              countWordsInLast,
             },
           });
         });
@@ -309,7 +323,7 @@ const checkFileByPatterns = ({
               : `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
           count: NaN,
           countKeywords,
-          countWords,
+          countWordsInLast,
         },
       });
     }
@@ -329,9 +343,11 @@ const generateTableRows = (tagsPatterns: TagsPatterns) => {
           keywordsToTags[tag] = value.keywordsIncluded;
         }
       });
+
       const h1Keywords = keywordsToTags.h1 || [];
       const titleKeywords = keywordsToTags.title || [];
       const descriptionKeywords = keywordsToTags.description || [];
+      const lastSentence = keywordsToTags.lastSentence || [];
 
       const missingTitleKeywords = h1Keywords.filter(
         (keyword) => !titleKeywords.includes(keyword)
@@ -341,11 +357,18 @@ const generateTableRows = (tagsPatterns: TagsPatterns) => {
         (keyword) => !descriptionKeywords.includes(keyword)
       );
 
+      const missingLastSentenceKeywords = h1Keywords.filter(
+        (keyword) => !lastSentence.includes(keyword)
+      );
+
       const toMuchTitleKeywords = titleKeywords.filter(
         (keyword) => !h1Keywords.includes(keyword)
       );
 
       const toMuchDescriptionKeywords = descriptionKeywords.filter(
+        (keyword) => !h1Keywords.includes(keyword)
+      );
+      const toMuchLastSentenceKeywords = lastSentence.filter(
         (keyword) => !h1Keywords.includes(keyword)
       );
 
@@ -356,7 +379,7 @@ const generateTableRows = (tagsPatterns: TagsPatterns) => {
       <tr>
           ${
             !(tag === "keywords" && !value.countKeywords)
-              ? !(tag === "lastSentence" && !value.countWords)
+              ? !(tag === "lastSentence" && !value.countWordsInLast)
                 ? !isNaN(value.count)
                   ? value.maxLength && value.minLength
                     ? value.multipleTags
@@ -383,6 +406,21 @@ const generateTableRows = (tagsPatterns: TagsPatterns) => {
                             ? "color: black"
                             : "color: red"
                         }">${value.requirement}</span></td>`
+                    : value.countWordsInLast && tag === "lastSentence"
+                    ? `<td>List of <strong>${
+                        tag === "lastSentence" && "Last sentence on website"
+                      }</strong>: ${
+                        value.forbiddenCharacters &&
+                        value.forbiddenCharacters.length > 0
+                          ? `<strong style="color:red">&nbsp;(Contains forbidden words: ${value.forbiddenCharacters})</strong>`
+                          : ``
+                      }${
+                        value.keywordsIncluded
+                          ? value.keywordsIncluded.length > 0
+                            ? ` | <strong style="color:green">Keywords included: ${value.keywordsIncluded}</strong>`
+                            : ` | <strong style="color:red">Does not contain keywords</strong>`
+                          : ``
+                      }</strong></td><td></td>`
                     : `<td>List of <strong>${tag}</strong>: <strong>${value.content}</strong></td><td></td>`
                   : `<td>${
                       tag !== "keywords" ? `Length of ` : `List of `
@@ -401,6 +439,84 @@ const generateTableRows = (tagsPatterns: TagsPatterns) => {
         })
         .join("");
 
+      const generateKeywordsSections = () => {
+        let sections = "";
+
+        const missingKeywordsHeader = `
+            <tr><td colspan="2"><strong style="color:red">Missing keywords: </strong></td></tr>
+          `;
+
+        const tooMuchKeywordsHeader = `
+            <tr><td colspan="2"><strong style="color:red">Too much keywords: </strong></td></tr>
+          `;
+
+        const generateMissingKeywordsSection = (
+          tag: string,
+          keywordsList: string[]
+        ) => {
+          if (keywordsList.length > 0) {
+            return `
+                <tr><td colspan="2"><strong>${tag}</strong> : ${keywordsList}</td></tr>
+              `;
+          }
+          return "";
+        };
+
+        const generateTooMuchKeywordsSection = (
+          tag: string,
+          keywordsList: string[]
+        ) => {
+          if (keywordsList.length > 0) {
+            return `
+                <tr><td colspan="2"><strong>${tag}</strong> : ${keywordsList}</td></tr>
+              `;
+          }
+          return "";
+        };
+
+        if (
+          missingTitleKeywords.length > 0 ||
+          missingDescriptionKeywords.length > 0 ||
+          missingLastSentenceKeywords.length > 0
+        ) {
+          sections += missingKeywordsHeader;
+          sections += generateMissingKeywordsSection(
+            "Title",
+            missingTitleKeywords
+          );
+          sections += generateMissingKeywordsSection(
+            "Description",
+            missingDescriptionKeywords
+          );
+          sections += generateMissingKeywordsSection(
+            "Last Sentence",
+            missingLastSentenceKeywords
+          );
+        }
+
+        if (
+          toMuchTitleKeywords.length > 0 ||
+          toMuchDescriptionKeywords.length > 0 ||
+          toMuchLastSentenceKeywords.length > 0
+        ) {
+          sections += tooMuchKeywordsHeader;
+          sections += generateTooMuchKeywordsSection(
+            "Title",
+            toMuchTitleKeywords
+          );
+          sections += generateTooMuchKeywordsSection(
+            "Description",
+            toMuchDescriptionKeywords
+          );
+          sections += generateTooMuchKeywordsSection(
+            "Last Sentence",
+            toMuchLastSentenceKeywords
+          );
+        }
+
+        return sections;
+      };
+
       return `<thead>
       <tr>
       <th colspan="2">${file}</th>
@@ -408,49 +524,7 @@ const generateTableRows = (tagsPatterns: TagsPatterns) => {
       </thead>
       <tbody>
       ${rows}
-${
-  h1Keywords.length > 0
-    ? `
-  ${
-    missingTitleKeywords.length > 0
-      ? missingDescriptionKeywords.length > 0
-        ? `
-           <tr><td colspan="2"><strong style="color:red">Missing keywords: </strong></td></tr>
-           <tr><td colspan="2"><strong>Title</strong> : ${missingTitleKeywords}</td></tr>
-           <tr><td colspan="2"><strong>Description</strong> : ${missingDescriptionKeywords}</td></tr>
-          `
-        : `<tr><td colspan="2"><strong style="color:red">Missing keywords: </strong></td></tr>
-           <tr><td colspan="2"><strong>Title</strong> : ${missingTitleKeywords}</td></tr>
-          `
-      : missingDescriptionKeywords.length > 0
-      ? `
-         <tr><td colspan="2"><strong style="color:red">Missing keywords: </strong></td></tr>
-         <tr><td colspan="2"><strong>Description</strong> : ${missingDescriptionKeywords}</td></tr>
-        `
-      : ``
-  }
-  ${
-    toMuchTitleKeywords.length > 0
-      ? toMuchDescriptionKeywords.length > 0
-        ? `
-           <tr><td colspan="2"><strong style="color:red">Too much keywords: </strong></td></tr>
-           <tr><td colspan="2"><strong>Title</strong> : ${toMuchTitleKeywords}</td></tr>
-           <tr><td colspan="2"><strong>Description</strong> : ${toMuchDescriptionKeywords}</td></tr>
-          `
-        : `<tr><td colspan="2"><strong style="color:red">Too much keywords: </strong></td></tr>
-           <tr><td colspan="2"><strong>Title</strong> : ${toMuchTitleKeywords}</td></tr>
-          `
-      : toMuchDescriptionKeywords.length > 0
-      ? `
-         <tr><td colspan="2"><strong style="color:red">Too much keywords: </strong></td></tr>
-         <tr><td colspan="2"><strong>Description</strong> : ${toMuchDescriptionKeywords}</td></tr>
-        `
-      : ``
-  }
-  
-  `
-    : ``
-}
+      ${generateKeywordsSections()}
       </tbody>
      <tr class="empty-row"></tr>
       `;

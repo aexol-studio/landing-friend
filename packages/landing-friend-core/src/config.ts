@@ -33,7 +33,7 @@ export type TagsProps =
     }
   | {
       lastSentence: {
-        countWords: boolean;
+        countWordsInLast: boolean;
       };
     }
   | {
@@ -89,7 +89,7 @@ export const EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE: Pick<
         maxLength: 200,
         minLength: 50,
       },
-      lastSentence:{countWords:true},
+      lastSentence: { countWordsInLast: true },
       keywords: { countKeywords: true },
     },
   },
