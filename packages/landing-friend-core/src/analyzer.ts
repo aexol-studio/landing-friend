@@ -26,7 +26,18 @@ type TagsWithReason = {
 
 type KeywordsTagsProps = Record<string, string[]>;
 
-const staticTags = ["strong", "em", "span", "br", "style", "p", "div"];
+const staticTags = [
+  "strong",
+  "em",
+  "span",
+  "br",
+  "style",
+  "p",
+  "div",
+  "svg",
+  "a",
+  "path",
+];
 const unicodeToConvert = {
   "&#x27;": "'",
   "&amp;": "&",
