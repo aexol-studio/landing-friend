@@ -79,15 +79,15 @@ export const EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE: Pick<
     tags: {
       h1: {
         minLength: 10,
-        maxLength: 70,
+        maxLength: 100,
       },
       title: {
         minLength: 10,
-        maxLength: 70,
+        maxLength: 60,
       },
       description: {
-        maxLength: 200,
-        minLength: 50,
+        maxLength: 160,
+        minLength: 120,
       },
       lastSentence: { countWordsInLast: true },
       keywords: { countKeywords: true },
