@@ -12,6 +12,10 @@ type SitemapSettings = {
   sortBy: "priority" | "alphabetically-asc" | "alphabetically-desc";
 };
 
+export type AdvancedTagsProps = {
+  og?: boolean;
+};
+
 export type TagsProps =
   | {
       h1: {
@@ -49,9 +53,8 @@ export type ConfigFile = {
   robots: boolean;
   excludedPage: string[];
   sitemap?: SitemapSettings;
-  analyzer?: {
-    tags: TagsProps;
-  };
+  analyzer?: TagsProps;
+  advancedAnalyzer?: AdvancedTagsProps;
 };
 export const GLOBAL_CONFIG_FILE: ConfigFile = {
   domain: "https://www.example.com",
@@ -76,22 +79,28 @@ export const EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE: Pick<
   "analyzer"
 > = {
   analyzer: {
-    tags: {
-      h1: {
-        minLength: 10,
-        maxLength: 100,
-      },
-      title: {
-        minLength: 10,
-        maxLength: 60,
-      },
-      description: {
-        maxLength: 160,
-        minLength: 120,
-      },
-      lastSentence: { countWordsInLast: true },
-      keywords: { countKeywords: true },
+    h1: {
+      minLength: 10,
+      maxLength: 70,
     },
+    title: {
+      minLength: 10,
+      maxLength: 70,
+    },
+    description: {
+      maxLength: 200,
+      minLength: 50,
+    },
+    lastSentence: { countWordsInLast: true },
+    keywords: { countKeywords: true },
+  },
+};
+export const EXTENDED_ADVANCED_ANALYZER_GLOBAL_CONFIG_FILE: Pick<
+  ConfigFile,
+  "advancedAnalyzer"
+> = {
+  advancedAnalyzer: {
+    og: true,
   },
 };
 

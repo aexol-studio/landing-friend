@@ -2,6 +2,7 @@ import {
   GLOBAL_CONFIG_FILE,
   EXTENDED_SITEMAP_GLOBAL_CONFIG_FILE,
   EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE,
+  EXTENDED_ADVANCED_ANALYZER_GLOBAL_CONFIG_FILE,
   initConfig,
   message,
   readConfig,
@@ -85,12 +86,15 @@ export const configInit = async () => {
       {
         type: "confirm",
         name: "sitemap.trailingSlash",
-        message: "Whether to add / at the end of the url ?",
+        message: `Whether to add "/" at the end of the url ?`,
         default: EXTENDED_SITEMAP_GLOBAL_CONFIG_FILE.sitemap?.trailingSlash,
       },
     ]);
   }
   let extendResponseByAnalyzer: Pick<ConfigFile, "analyzer"> = {};
+
+  let extendResponseByAdvanceAnalyzer: Pick<ConfigFile, "advancedAnalyzer"> =
+    {};
   const { extendConfigByAnalyzer } = await inquirer.prompt<{
     extendConfigByAnalyzer: boolean;
   }>({
@@ -99,99 +103,109 @@ export const configInit = async () => {
     message: "Do you want to extend config by analyzer?",
     default: true,
   });
+
   if (extendConfigByAnalyzer) {
     extendResponseByAnalyzer = await inquirer.prompt([
       {
         type: "number",
-        name: "analyzer.tags.h1.minLength",
+        name: "analyzer.h1.minLength",
         message: "Enter minimum length for h1:",
         default:
-          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer?.tags instanceof
-            Object &&
-          "h1" in EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.tags &&
-          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.tags.h1.minLength,
+          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer instanceof Object &&
+          "h1" in EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer &&
+          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.h1.minLength,
       },
       {
         type: "number",
-        name: "analyzer.tags.h1.maxLength",
+        name: "analyzer.h1.maxLength",
         message: "Enter maximum length for h1:",
         default:
-          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer?.tags instanceof
-            Object &&
-          "h1" in EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.tags &&
-          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.tags.h1.maxLength,
+          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer instanceof Object &&
+          "h1" in EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer &&
+          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.h1.maxLength,
       },
       {
         type: "number",
-        name: "analyzer.tags.title.minLength",
+        name: "analyzer.title.minLength",
         message: "Enter minimum length for title:",
         default:
-          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer?.tags instanceof
-            Object &&
-          "title" in EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.tags &&
-          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.tags.title.minLength,
+          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer instanceof Object &&
+          "title" in EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer &&
+          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.title.minLength,
       },
       {
         type: "number",
-        name: "analyzer.tags.title.maxLength",
+        name: "analyzer.title.maxLength",
         message: "Enter maximum length for title:",
         default:
-          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer?.tags instanceof
-            Object &&
-          "title" in EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.tags &&
-          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.tags.title.maxLength,
+          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer instanceof Object &&
+          "title" in EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer &&
+          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.title.maxLength,
       },
       {
         type: "number",
-        name: "analyzer.tags.description.minLength",
+        name: "analyzer.description.minLength",
         message: "Enter minimum length for description:",
         default:
-          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer?.tags instanceof
-            Object &&
-          "description" in EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.tags &&
-          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.tags.description
-            .minLength,
+          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer instanceof Object &&
+          "description" in EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer &&
+          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.description.minLength,
       },
       {
         type: "number",
-        name: "analyzer.tags.description.maxLength",
+        name: "analyzer.description.maxLength",
         message: "Enter maximum length for description:",
         default:
-          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer?.tags instanceof
-            Object &&
-          "description" in EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.tags &&
-          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.tags.description
-            .maxLength,
+          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer instanceof Object &&
+          "description" in EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer &&
+          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.description.maxLength,
       },
       {
         type: "confirm",
-        name: "analyzer.tags.lastSentence.countWordsInLast",
-        message: "Do you want to check for matching keywords in last the div?",
-        default:
-          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer?.tags instanceof
-            Object &&
-          "lastSentence" in
-            EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.tags &&
-          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.tags.lastSentence
-            .countWordsInLast,
-      },
-      {
-        type: "confirm",
-        name: "analyzer.tags.keywords.countKeywords",
+        name: "analyzer.keywords.countKeywords",
         message: "Do you want to count keywords?",
         default:
-          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer?.tags instanceof
-            Object &&
-          "keywords" in EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.tags &&
-          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.tags.keywords
-            .countKeywords,
+          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer instanceof Object &&
+          "keywords" in EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer &&
+          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.keywords.countKeywords,
+      },
+      {
+        type: "confirm",
+        name: "analyzer.lastSentence.countWordsInLast",
+        message: "Do you want to check for matching keywords in last the div?",
+        default:
+          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer instanceof Object &&
+          "lastSentence" in EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer &&
+          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.lastSentence
+            .countWordsInLast,
       },
     ]);
+    const { extendAdvanceAnalyzer } = await inquirer.prompt<{
+      extendAdvanceAnalyzer: boolean;
+    }>({
+      type: "confirm",
+      name: "extendAdvanceAnalyzer",
+      message: "Does you want to enable advance analyzer?",
+      default: true,
+    });
+
+    if (extendAdvanceAnalyzer) {
+      extendResponseByAdvanceAnalyzer = await inquirer.prompt([
+        {
+          type: "confirm",
+          name: "advancedAnalyzer.og",
+          message: "Do you want to check all og protocols ?",
+          default:
+            EXTENDED_ADVANCED_ANALYZER_GLOBAL_CONFIG_FILE.advancedAnalyzer?.og,
+        },
+      ]);
+    }
   }
   const completeConfig: ConfigFile = {
     ...directories,
     ...extendResponseBySitemap,
     ...extendResponseByAnalyzer,
+    ...extendResponseByAdvanceAnalyzer,
   };
   await initConfig(completeConfig);
 };

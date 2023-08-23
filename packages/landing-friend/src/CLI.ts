@@ -9,7 +9,7 @@ import {
   websiteAnalyzer,
 } from "@landing-friend/core";
 
-import { configInit } from "./functions/configInit.js";
+import { configInit } from "./index.js";
 
 process.on("SIGINT", () => {
   message("Exiting...", "redBright");

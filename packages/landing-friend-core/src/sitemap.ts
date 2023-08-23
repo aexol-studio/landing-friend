@@ -1,12 +1,12 @@
-import { ConfigFile } from "./config.js";
-import { messageWithContent } from "./console.js";
-import {
-  getHtmlFiles,
-  saveSitemap,
-  saveOldSitemap,
-  matchedSetting,
-} from "./utils.js";
 import ISO from "iso-639-1";
+import {
+  ConfigFile,
+  getHtmlFiles,
+  matchedSetting,
+  messageWithContent,
+  saveOldSitemap,
+  saveSitemap,
+} from "./index.js";
 
 type File = {
   link: string;
