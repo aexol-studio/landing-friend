@@ -10,8 +10,10 @@ import {
   message,
   forbiddenCharacters as _forbiddenCharacters,
   TagsPatterns,
+  AdvancedTagsPatterns,
   checkFiles,
   prepareHTMLWithTables,
+  AllTagsName,
 } from "./index.js";
 
 export const websiteAnalyzer = (config: ConfigFile) => {
@@ -28,23 +30,7 @@ export const websiteAnalyzer = (config: ConfigFile) => {
     const allFiles = getFilesToAnalyze(input);
 
     let tagsPatterns: TagsPatterns = {};
-    let countKeywords: boolean = true;
-    let countWordsInLast: boolean = true;
-    if (
-      Object.entries(analyzer).some(
-        ([tag, value]) => tag === "keywords" && value.countKeywords !== true
-      )
-    ) {
-      countKeywords = false;
-    }
-    if (
-      Object.entries(analyzer).some(
-        ([tag, value]) =>
-          tag === "lastSentence" && value.countWordsInLast !== true
-      )
-    ) {
-      countWordsInLast = false;
-    }
+    let advancedTagsPatterns: AdvancedTagsPatterns = {};
 
     allFiles.forEach((file) => {
       if (!matchedSetting(file, excludedPage, input)) {
@@ -53,38 +39,41 @@ export const websiteAnalyzer = (config: ConfigFile) => {
           tags,
           advancedTags,
           tagsPatterns,
-          countKeywords,
-          countWordsInLast,
+          advancedTagsPatterns,
+          countKeywords: tags.keywords.count,
+          countWordsInLast: tags.lastSentence.count,
         });
       }
     });
-
     const htmlWithTablesAndCharts = prepareHTMLWithTables({
       tagsPatterns,
     });
 
     if (analyzer) {
-      const cleanedTagsPatterns: TagsPatterns = {};
+      let cleanedTagsPatterns: TagsPatterns = {};
       Object.entries(tagsPatterns).forEach(([file, tagData]) => {
-        cleanedTagsPatterns[file] = {};
-        Object.entries(tagData).forEach(([tag, value]) => {
-          !(tag === "keywords" && !value.countKeywords) &&
-          !(tag === "lastSentence" && !value.countWordsInLast)
-            ? (cleanedTagsPatterns[file][tag] = {
-                requirement:
-                  value.requirement &&
-                  value.requirement.replace(/<\/?strong>/gs, ""),
-                count: value.count,
-                content: value.content,
-                forbiddenCharacters: value.forbiddenCharacters,
-                keywordsIncluded:
-                  tag !== "keywords" ? value.keywordsIncluded : undefined,
-                countKeywords:
-                  tag === "keywords" ? value.countKeywords : undefined,
-                countWordsInLast:
-                  tag === "lastSentence" ? value.countWordsInLast : undefined,
-              })
-            : undefined;
+        cleanedTagsPatterns[file] = { ...cleanedTagsPatterns[file] };
+        Object.entries(tagData).forEach(([_tag, value]) => {
+          const tag = _tag as AllTagsName;
+          if (
+            !(tag === "keywords" && !value.countKeywords) &&
+            !(tag === "lastSentence" && !value.countWordsInLast)
+          ) {
+            cleanedTagsPatterns[file][tag] = {
+              requirement:
+                value.requirement &&
+                value.requirement.replace(/<\/?strong>/gs, ""),
+              quantity: value.quantity,
+              content: value.content,
+              forbiddenCharacters: value.forbiddenCharacters,
+              keywordsIncluded:
+                tag !== "keywords" ? value.keywordsIncluded : undefined,
+              countKeywords:
+                tag === "keywords" ? value.countKeywords : undefined,
+              countWordsInLast:
+                tag === "lastSentence" ? value.countWordsInLast : undefined,
+            };
+          }
         });
       });
       try {

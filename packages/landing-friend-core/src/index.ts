@@ -4,3 +4,4 @@ export * from "./sitemap.js";
 export * from "./analyzer.js";
 export * from "./data/index.js";
 export * from "./functions/index.js";
+export * from "./types/index.js";

@@ -1,3 +1,2 @@
-export * from "./config.js";
-export * from "./basicAnalyzer.js";
-export * from "./prepareHTML.js";
+export * from "./analyzer/index.js";
+export * from "./config/index.js";

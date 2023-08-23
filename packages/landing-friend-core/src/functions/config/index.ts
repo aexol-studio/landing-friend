@@ -1,4 +1,4 @@
-import { message } from "../index.js";
+import { message } from "../../index.js";
 import fs from "fs";
 import path from "path";
 

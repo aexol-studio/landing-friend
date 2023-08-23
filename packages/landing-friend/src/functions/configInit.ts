@@ -162,22 +162,21 @@ export const configInit = async () => {
       },
       {
         type: "confirm",
-        name: "analyzer.keywords.countKeywords",
+        name: "analyzer.keywords.count",
         message: "Do you want to count keywords?",
         default:
           EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer instanceof Object &&
           "keywords" in EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer &&
-          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.keywords.countKeywords,
+          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.keywords.count,
       },
       {
         type: "confirm",
-        name: "analyzer.lastSentence.countWordsInLast",
+        name: "analyzer.lastSentence.count",
         message: "Do you want to check for matching keywords in last the div?",
         default:
           EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer instanceof Object &&
           "lastSentence" in EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer &&
-          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.lastSentence
-            .countWordsInLast,
+          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.lastSentence.count,
       },
     ]);
     const { extendAdvanceAnalyzer } = await inquirer.prompt<{
@@ -194,9 +193,17 @@ export const configInit = async () => {
         {
           type: "confirm",
           name: "advancedAnalyzer.og",
-          message: "Do you want to check all og protocols ?",
+          message: "Do you want to check all og protocols?",
           default:
             EXTENDED_ADVANCED_ANALYZER_GLOBAL_CONFIG_FILE.advancedAnalyzer?.og,
+        },
+        {
+          type: "confirm",
+          name: "advancedAnalyzer.twitter",
+          message: "Do you want to check all twitter metadata?",
+          default:
+            EXTENDED_ADVANCED_ANALYZER_GLOBAL_CONFIG_FILE.advancedAnalyzer
+              ?.twitter,
         },
       ]);
     }

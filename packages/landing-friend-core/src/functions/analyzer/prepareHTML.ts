@@ -1,4 +1,4 @@
-import { TagsPatterns } from "./index.js";
+import { TagsPatterns } from "../../index.js";
 
 type KeywordsTagsProps = Record<string, string[]>;
 
@@ -57,16 +57,16 @@ export const generateTableRows = (tagsPatterns: TagsPatterns) => {
               ${
                 !(tag === "keywords" && !value.countKeywords)
                   ? !(tag === "lastSentence" && !value.countWordsInLast)
-                    ? !isNaN(value.count)
+                    ? !isNaN(value.quantity)
                       ? value.maxLength && value.minLength
                         ? value.multipleTags
-                          ? `<td><strong style="color: red">Warning! Number of ${tag} on the page: ${value.count}</strong></td><td width="20%"><strong style="color: red">Check the code</strong></td>`
+                          ? `<td><strong style="color: red">Warning! Number of ${tag} on the page: ${value.quantity}</strong></td><td width="20%"><strong style="color: red">Check the code</strong></td>`
                           : `<td>Length of <strong>${tag}</strong>: <strong style="${
-                              value.count >= value.minLength &&
-                              value.count <= value.maxLength
+                              value.quantity >= value.minLength &&
+                              value.quantity <= value.maxLength
                                 ? "color: black"
                                 : "color: red"
-                            }">${value.count}</strong>${
+                            }">${value.quantity}</strong>${
                               value.forbiddenCharacters &&
                               value.forbiddenCharacters.length > 0
                                 ? `<strong style="color:red">&nbsp;(Contains forbidden words: ${value.forbiddenCharacters})</strong>`
@@ -78,8 +78,8 @@ export const generateTableRows = (tagsPatterns: TagsPatterns) => {
                                   : ` | <strong style="color:red">Does not contain keywords</strong>`
                                 : ``
                             }</td><td width="20%"><span style="${
-                              value.count >= value.minLength &&
-                              value.count <= value.maxLength
+                              value.quantity >= value.minLength &&
+                              value.quantity <= value.maxLength
                                 ? "color: black"
                                 : "color: red"
                             }">${value.requirement}</span></td>`

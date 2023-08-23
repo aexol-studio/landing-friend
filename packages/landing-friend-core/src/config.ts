@@ -1,61 +1,8 @@
 import fs from "fs";
 import { message } from "./console.js";
-import { LanguageCode } from "iso-639-1";
 import ts from "typescript";
+import { ConfigFile } from "./index.js";
 
-type SitemapSettings = {
-  locale: {
-    defaultLocale: LanguageCode;
-    localeWildcard: string;
-  };
-  trailingSlash: boolean;
-  sortBy: "priority" | "alphabetically-asc" | "alphabetically-desc";
-};
-
-export type AdvancedTagsProps = {
-  og?: boolean;
-};
-
-export type TagsProps =
-  | {
-      h1: {
-        minLength: number;
-        maxLength: number;
-      };
-    }
-  | {
-      title: {
-        minLength: number;
-        maxLength: number;
-      };
-    }
-  | {
-      description: {
-        minLength: number;
-        maxLength: number;
-      };
-    }
-  | {
-      lastSentence: {
-        countWordsInLast: boolean;
-      };
-    }
-  | {
-      keywords: {
-        countKeywords: boolean;
-      };
-    };
-
-export type ConfigFile = {
-  domain: string;
-  input: string;
-  output: string;
-  robots: boolean;
-  excludedPage: string[];
-  sitemap?: SitemapSettings;
-  analyzer?: TagsProps;
-  advancedAnalyzer?: AdvancedTagsProps;
-};
 export const GLOBAL_CONFIG_FILE: ConfigFile = {
   domain: "https://www.example.com",
   input: "./out",
@@ -81,18 +28,18 @@ export const EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE: Pick<
   analyzer: {
     h1: {
       minLength: 10,
-      maxLength: 70,
+      maxLength: 100,
     },
     title: {
       minLength: 10,
-      maxLength: 70,
+      maxLength: 60,
     },
     description: {
-      maxLength: 200,
-      minLength: 50,
+      maxLength: 160,
+      minLength: 120,
     },
-    lastSentence: { countWordsInLast: true },
-    keywords: { countKeywords: true },
+    lastSentence: { count: true },
+    keywords: { count: true },
   },
 };
 export const EXTENDED_ADVANCED_ANALYZER_GLOBAL_CONFIG_FILE: Pick<
@@ -101,6 +48,7 @@ export const EXTENDED_ADVANCED_ANALYZER_GLOBAL_CONFIG_FILE: Pick<
 > = {
   advancedAnalyzer: {
     og: true,
+    twitter: true,
   },
 };
 
