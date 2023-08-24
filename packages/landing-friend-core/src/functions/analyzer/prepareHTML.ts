@@ -1,4 +1,4 @@
-import { TagsPatterns } from "../../index.js";
+import { AdvancedTagsPatterns, TagsPatterns } from "../../index.js";
 
 type KeywordsTagsProps = Record<string, string[]>;
 
@@ -6,16 +6,16 @@ const arrayFilleter = (firstArray: string[], secondArray: string[]) => {
   return firstArray.filter((element) => !secondArray.includes(element));
 };
 
-export const generateTableRows = (tagsPatterns: TagsPatterns) => {
+export const generateTableRows = (
+  tagsPatterns: TagsPatterns,
+  advancedTagsPatterns: AdvancedTagsPatterns,
+  countKeywords: boolean
+) => {
   return Object.entries(tagsPatterns)
     .map(([file, tagData]) => {
       let keywordsToTags: KeywordsTagsProps = {};
       Object.entries(tagData).forEach(([tag, value]) => {
-        if (
-          tag !== "keywords" &&
-          value.keywordsIncluded &&
-          tagData["keywords"].countKeywords
-        ) {
+        if (tag !== "keywords" && value.keywordsIncluded && countKeywords) {
           keywordsToTags[tag] = value.keywordsIncluded;
         }
       });
@@ -97,7 +97,17 @@ export const generateTableRows = (tagsPatterns: TagsPatterns) => {
                                 ? ` | <strong style="color:green">Keywords included: ${value.keywordsIncluded}</strong>`
                                 : ` | <strong style="color:red">Does not contain keywords</strong>`
                               : ``
-                          }</strong></td><td></td>`
+                          }</strong></td><td>
+                          ${
+                            value.keywordsIncluded &&
+                            arrayFilleter(value.keywordsIncluded, h1Keywords)
+                              .length === 0 &&
+                            arrayFilleter(h1Keywords, value.keywordsIncluded)
+                              .length === 0
+                              ? `<span>${value.requirement}</span>`
+                              : `<strong style="color:red">${value.requirement}</strong>`
+                          }
+                         </td>`
                         : `<td>List of <strong>${tag}</strong>: <strong>${value.content}</strong></td><td></td>`
                       : `<td>${
                           tag !== "keywords" ? `Length of ` : `List of `
@@ -111,6 +121,7 @@ export const generateTableRows = (tagsPatterns: TagsPatterns) => {
                     : ``
                   : ``
               }
+              
               </tr>
               `;
         })
@@ -209,9 +220,19 @@ export const generateTableRows = (tagsPatterns: TagsPatterns) => {
     .join("");
 };
 
-export const prepareHTMLWithTables = (data: { tagsPatterns: TagsPatterns }) => {
-  const { tagsPatterns } = data;
-  const brokenTagsTable = generateTableRows(tagsPatterns);
+export const prepareHTMLWithTables = (
+  data: {
+    tagsPatterns: TagsPatterns;
+    advancedTagsPatterns: AdvancedTagsPatterns;
+  },
+  countKeywords: boolean
+) => {
+  const { tagsPatterns, advancedTagsPatterns } = data;
+  const brokenTagsTable = generateTableRows(
+    tagsPatterns,
+    advancedTagsPatterns,
+    countKeywords
+  );
 
   return `<!DOCTYPE html>
     <html>

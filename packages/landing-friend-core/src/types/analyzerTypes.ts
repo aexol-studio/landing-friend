@@ -4,7 +4,9 @@ export type TagsName = "h1" | "title" | "description";
 
 export type AdditionalTagsName = "lastSentence" | "keywords";
 
-export type AllTagsName = TagsName | AdditionalTagsName;
+export type BasicTagsName = TagsName | AdditionalTagsName;
+
+export type AllTagsName = BasicTagsName | AdditionalTagsName;
 
 export type TagsProps = Record<
   TagsName,
@@ -43,3 +45,5 @@ export type AdvancedTagsPatterns = Record<
   string,
   Record<AdvancedTagsName, AdvancedTagsWithReason>
 >;
+
+export type CombineTagsPatterns = TagsPatterns | AdvancedTagsPatterns;

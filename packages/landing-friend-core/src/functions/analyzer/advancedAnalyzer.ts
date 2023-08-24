@@ -49,10 +49,11 @@ export const checkFileToAdvanceAnalyzer = ({
   fileContent: string;
   advancedTags?: AdvancedTagsProps;
   advancedTagsPatterns: AdvancedTagsPatterns;
-}) => {
+}): AdvancedTagsPatterns | undefined => {
   if (!advancedTags) {
     return;
   }
+  let updatedTagsPatterns = { ...advancedTagsPatterns[file] };
   Object.entries(advancedTags).forEach(([_tag, value]) => {
     if (!value) return;
     const tag = _tag as AdvancedTagsName;
@@ -79,7 +80,7 @@ export const checkFileToAdvanceAnalyzer = ({
           const forbiddenCharacters = _forbiddenCharacters.filter((char) =>
             content.includes(char)
           );
-          return (advancedTagsPatterns[file] = {
+          updatedTagsPatterns = advancedTagsPatterns[file] = {
             ...advancedTagsPatterns[file],
             [tag]: {
               tagAmount: matches.length,
@@ -87,16 +88,17 @@ export const checkFileToAdvanceAnalyzer = ({
               content: value.content,
               forbiddenCharacters,
             },
-          });
+          };
         });
       });
     } else {
-      return (advancedTagsPatterns[file] = {
+      updatedTagsPatterns = advancedTagsPatterns[file] = {
         ...advancedTagsPatterns[file],
         [tag]: {
           tagAmount: NaN,
         },
-      });
+      };
     }
   });
+  return { ...advancedTagsPatterns, [file]: updatedTagsPatterns };
 };

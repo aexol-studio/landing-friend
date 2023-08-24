@@ -13,7 +13,7 @@ import {
   AdvancedTagsPatterns,
   checkFiles,
   prepareHTMLWithTables,
-  AllTagsName,
+  BasicTagsName,
 } from "./index.js";
 
 export const websiteAnalyzer = (config: ConfigFile) => {
@@ -28,13 +28,12 @@ export const websiteAnalyzer = (config: ConfigFile) => {
 
   const analyze = async () => {
     const allFiles = getFilesToAnalyze(input);
-
     let tagsPatterns: TagsPatterns = {};
     let advancedTagsPatterns: AdvancedTagsPatterns = {};
 
     allFiles.forEach((file) => {
       if (!matchedSetting(file, excludedPage, input)) {
-        checkFiles({
+        const allTagsPatterns = checkFiles({
           file,
           tags,
           advancedTags,
@@ -43,18 +42,27 @@ export const websiteAnalyzer = (config: ConfigFile) => {
           countKeywords: tags.keywords.count,
           countWordsInLast: tags.lastSentence.count,
         });
+        tagsPatterns = allTagsPatterns.basicAnalyze;
+        if (allTagsPatterns.advancedAnalyze) {
+          advancedTagsPatterns = allTagsPatterns.advancedAnalyze;
+        }
       }
     });
-    const htmlWithTablesAndCharts = prepareHTMLWithTables({
-      tagsPatterns,
-    });
+
+    const htmlWithTablesAndCharts = prepareHTMLWithTables(
+      {
+        tagsPatterns,
+        advancedTagsPatterns,
+      },
+      tags.keywords.count
+    );
 
     if (analyzer) {
       let cleanedTagsPatterns: TagsPatterns = {};
       Object.entries(tagsPatterns).forEach(([file, tagData]) => {
         cleanedTagsPatterns[file] = { ...cleanedTagsPatterns[file] };
         Object.entries(tagData).forEach(([_tag, value]) => {
-          const tag = _tag as AllTagsName;
+          const tag = _tag as BasicTagsName;
           if (
             !(tag === "keywords" && !value.countKeywords) &&
             !(tag === "lastSentence" && !value.countWordsInLast)
@@ -68,10 +76,7 @@ export const websiteAnalyzer = (config: ConfigFile) => {
               forbiddenCharacters: value.forbiddenCharacters,
               keywordsIncluded:
                 tag !== "keywords" ? value.keywordsIncluded : undefined,
-              countKeywords:
-                tag === "keywords" ? value.countKeywords : undefined,
-              countWordsInLast:
-                tag === "lastSentence" ? value.countWordsInLast : undefined,
+              multipleTags: value.multipleTags,
             };
           }
         });

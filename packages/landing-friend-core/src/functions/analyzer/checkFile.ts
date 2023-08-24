@@ -41,6 +41,6 @@ export const checkFiles = ({
     advancedTags,
     advancedTagsPatterns,
   });
-  console.log("basic", basicAnalyze);
-  console.log("advanced", advancedAnalyze);
+
+  return { basicAnalyze, advancedAnalyze };
 };

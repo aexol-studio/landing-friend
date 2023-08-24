@@ -4,31 +4,38 @@ import {
   unicode,
   forbiddenCharacters as _forbiddenCharacters,
   TagsPatterns,
-  AllTagsName,
+  BasicTagsName,
   TagsWithReason,
 } from "../../index.js";
 
-const checkContent = (tagsName: AllTagsName, fileContent: string) => {
+const checkContent = (tagName: BasicTagsName, fileContent: string) => {
   let regex: RegExp | undefined;
-  const matchedArray: string[] = [];
-  if (tagsName === "description") {
+  let matches: RegExpMatchArray | null = null;
+  if (tagName === "description") {
     regex = new RegExp(`<meta name="description" content="(.*?)"`, "g");
-  } else if (tagsName === "keywords") {
+  } else if (tagName === "keywords") {
     regex = new RegExp(`<meta property="keywords" content="(.*?)"`, "g");
-  } else if (tagsName === "lastSentence") {
+  } else if (tagName === "lastSentence") {
     regex = new RegExp(`<div.*?>(.*?)<\/div>`, "g");
   } else {
-    regex = new RegExp(`<${tagsName}.*?>(.*?)</${tagsName}>`, "g");
+    regex = new RegExp(`<${tagName}.*?>(.*?)<\/${tagName}>`, "g");
   }
 
   if (regex) {
-    const matches = fileContent.match(regex);
+    matches = fileContent.match(regex);
+
+    if (tagName === "lastSentence" && matches !== null) {
+      const lastMatch = matches[matches.length - 1];
+      matches = lastMatch !== undefined ? [lastMatch] : null;
+    }
+
     if (matches) {
-      matches.forEach((match) => {
-        const captureGroups = regex!.exec(match);
+      const updatedMatches = [...matches];
+
+      updatedMatches.forEach((match, index) => {
+        let captureGroups = regex!.exec(match);
         if (captureGroups) {
           let content = captureGroups[1];
-
           staticTags.forEach((staticTag) => {
             const staticTagRegex = new RegExp(
               `<${staticTag}.*?>|<\/${staticTag}>`,
@@ -42,13 +49,14 @@ const checkContent = (tagsName: AllTagsName, fileContent: string) => {
             content = content.replace(staticTagRegex, "");
           });
 
-          matchedArray.push(content);
+          updatedMatches[index] = content;
         }
       });
+
+      matches = updatedMatches as RegExpMatchArray;
     }
   }
-
-  return matchedArray;
+  return matches;
 };
 
 export const checkFileToBasicAnalyzer = ({
@@ -65,9 +73,10 @@ export const checkFileToBasicAnalyzer = ({
   tagsPatterns: TagsPatterns;
   countKeywords: boolean;
   countWordsInLast: boolean;
-}) => {
+}): TagsPatterns => {
+  let updatedTagsPatterns = { ...tagsPatterns[file] };
   Object.entries(tags).forEach(([_tag, _value]) => {
-    const tag = _tag as AllTagsName;
+    const tag = _tag as BasicTagsName;
     let value = _value as TagsWithReason;
     let keywordsArray: string[] | undefined = [];
     if (countKeywords) {
@@ -86,13 +95,10 @@ export const checkFileToBasicAnalyzer = ({
     }
 
     let matches = checkContent(tag, fileContent);
-    if (tag === "lastSentence" && matches) {
-      matches = [matches[matches.length - 1]];
-    }
 
     if (matches) {
       if (matches.length > 1) {
-        return (tagsPatterns[file] = {
+        updatedTagsPatterns = tagsPatterns[file] = {
           ...tagsPatterns[file],
           [tag]: {
             ...value,
@@ -102,7 +108,7 @@ export const checkFileToBasicAnalyzer = ({
             countKeywords,
             countWordsInLast,
           },
-        });
+        };
       } else {
         matches.forEach((match) => {
           let text = match;
@@ -111,7 +117,7 @@ export const checkFileToBasicAnalyzer = ({
             text.includes(char)
           );
 
-          return (tagsPatterns[file] = {
+          updatedTagsPatterns = tagsPatterns[file] = {
             ...tagsPatterns[file],
             [tag]: {
               ...value,
@@ -120,6 +126,8 @@ export const checkFileToBasicAnalyzer = ({
               requirement:
                 tag === "keywords"
                   ? undefined
+                  : tag === "lastSentence"
+                  ? `Tag should contain the same keywords as upper tags`
                   : `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
               quantity: text.length,
               content: text,
@@ -137,23 +145,26 @@ export const checkFileToBasicAnalyzer = ({
               countKeywords,
               countWordsInLast,
             },
-          });
+          };
         });
       }
     } else {
-      return (tagsPatterns[file] = {
+      updatedTagsPatterns = tagsPatterns[file] = {
         ...tagsPatterns[file],
         [tag]: {
           ...value,
           requirement:
             tag === "keywords"
               ? `At least one keyword required`
+              : tag === "lastSentence"
+              ? `Tag should contain the same keywords as upper tags`
               : `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
           quantity: NaN,
           countKeywords,
           countWordsInLast,
         },
-      });
+      };
     }
   });
+  return { ...tagsPatterns, [file]: updatedTagsPatterns };
 };
