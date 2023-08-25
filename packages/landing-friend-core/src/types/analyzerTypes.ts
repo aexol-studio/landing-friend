@@ -38,7 +38,7 @@ export interface MetaNameTagsProps {
 }
 
 export type MetaNameWithProps = {
-  [metaName in AdditionalTagsName]?: MetaNameTagsProps;
+  [metaName in string]?: MetaNameTagsProps;
 };
 
 export interface AdvancedTagsWithReason {

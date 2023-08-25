@@ -65,18 +65,43 @@ export const generateTableRows = (
               <tbody>
           <tr>
               ${
-                !(tag === "keywords" && !value.countKeywords)
-                  ? !(tag === "lastSentence" && !value.countWordsInLast)
-                    ? !isNaN(value.quantity)
-                      ? value.maxLength && value.minLength
-                        ? value.multipleTags
-                          ? `<td><strong style="color: red">Warning! Number of ${tag} on the page: ${value.quantity}</strong></td><td width="20%"><strong style="color: red">Check the code</strong></td>`
-                          : `<td>Length of <strong>${tag}</strong>: <strong style="${
-                              value.quantity >= value.minLength &&
-                              value.quantity <= value.maxLength
-                                ? "color: black"
-                                : "color: red"
-                            }">${value.quantity}</strong>${
+                !(
+                  (tag === "og" && value.listOfFoundMeta) ||
+                  (tag === "twitter" && value.listOfFoundMeta)
+                )
+                  ? !(tag === "keywords" && !value.countKeywords)
+                    ? !(tag === "lastSentence" && !value.countWordsInLast)
+                      ? !isNaN(value.quantity)
+                        ? value.maxLength && value.minLength
+                          ? value.multipleTags
+                            ? `<td><strong style="color: red">Warning! Number of ${tag} on the page: ${value.quantity}</strong></td><td width="20%"><strong style="color: red">Check the code</strong></td>`
+                            : `<td>Length of <strong>${tag}</strong>: <strong style="${
+                                value.quantity >= value.minLength &&
+                                value.quantity <= value.maxLength
+                                  ? "color: black"
+                                  : "color: red"
+                              }">${value.quantity}</strong>${
+                                value.forbiddenCharacters &&
+                                value.forbiddenCharacters.length > 0
+                                  ? `<strong style="color:red">&nbsp;(Contains forbidden words: ${value.forbiddenCharacters})</strong>`
+                                  : ``
+                              }${
+                                value.keywordsIncluded
+                                  ? value.keywordsIncluded.length > 0
+                                    ? ` | <strong style="color:green">Keywords included: ${value.keywordsIncluded}</strong>`
+                                    : ` | <strong style="color:red">Does not contain keywords</strong>`
+                                  : ``
+                              }</td><td width="20%"><span style="${
+                                value.quantity >= value.minLength &&
+                                value.quantity <= value.maxLength
+                                  ? "color: black"
+                                  : "color: red"
+                              }">${value.requirement}</span></td>`
+                          : value.countWordsInLast && tag === "lastSentence"
+                          ? `<td>List of <strong>${
+                              tag === "lastSentence" &&
+                              "Last sentence on website"
+                            }</strong>: ${
                               value.forbiddenCharacters &&
                               value.forbiddenCharacters.length > 0
                                 ? `<strong style="color:red">&nbsp;(Contains forbidden words: ${value.forbiddenCharacters})</strong>`
@@ -87,27 +112,7 @@ export const generateTableRows = (
                                   ? ` | <strong style="color:green">Keywords included: ${value.keywordsIncluded}</strong>`
                                   : ` | <strong style="color:red">Does not contain keywords</strong>`
                                 : ``
-                            }</td><td width="20%"><span style="${
-                              value.quantity >= value.minLength &&
-                              value.quantity <= value.maxLength
-                                ? "color: black"
-                                : "color: red"
-                            }">${value.requirement}</span></td>`
-                        : value.countWordsInLast && tag === "lastSentence"
-                        ? `<td>List of <strong>${
-                            tag === "lastSentence" && "Last sentence on website"
-                          }</strong>: ${
-                            value.forbiddenCharacters &&
-                            value.forbiddenCharacters.length > 0
-                              ? `<strong style="color:red">&nbsp;(Contains forbidden words: ${value.forbiddenCharacters})</strong>`
-                              : ``
-                          }${
-                            value.keywordsIncluded
-                              ? value.keywordsIncluded.length > 0
-                                ? ` | <strong style="color:green">Keywords included: ${value.keywordsIncluded}</strong>`
-                                : ` | <strong style="color:red">Does not contain keywords</strong>`
-                              : ``
-                          }</strong></td><td>
+                            }</strong></td><td>
                           ${
                             value.keywordsIncluded &&
                             arrayFilleter(value.keywordsIncluded, h1Keywords)
@@ -118,18 +123,34 @@ export const generateTableRows = (
                               : `<strong style="color:red">${value.requirement}</strong>`
                           }
                          </td>`
-                        : `<td>List of <strong>${tag}</strong>: <strong>${value.content}</strong></td><td></td>`
-                      : `<td>${
-                          tag !== "keywords" ? `Length of ` : `List of `
-                        }<strong>${tag}</strong>: <strong style="color: red">${
-                          tag !== "keywords"
-                            ? `No characters detected`
-                            : `No words detected`
-                        }</strong></td><td width="20%"><strong style="color: red">${
-                          value.requirement
-                        }</strong></td>`
+                          : `<td>List of <strong>${tag}</strong>: <strong>${value.content}</strong></td><td></td>`
+                        : `<td>${
+                            tag !== "keywords" ? `Length of ` : `List of `
+                          }<strong>${tag}</strong>: <strong style="color: red">${
+                            tag !== "keywords"
+                              ? `No characters detected`
+                              : `No words detected`
+                          }</strong></td><td width="20%"><strong style="color: red">${
+                            value.requirement
+                          }</strong></td>`
+                      : ``
                     : ``
-                  : ``
+                  : `
+                  <tr><td colspan="2"><strong>List of advanced meta tag <span style="color:green">${tag} (Number of tags: ${
+                      value.tagAmount
+                    })</span></strong> </td></tr>
+                  ${Object.entries(value.listOfFoundMeta).map(
+                    ([title, prop]) => {
+                      return `<tr><td colspan="2">Content of <strong style="color:green">${title}</strong>: ${
+                        prop?.content
+                      } ${
+                        prop?.forbiddenCharacters
+                          ? `<span style="color:red">${prop.forbiddenCharacters}</span>`
+                          : ``
+                      } </td></tr>`;
+                    }
+                  )}
+                  `
               }
 
               </tr>
