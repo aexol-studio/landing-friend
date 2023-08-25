@@ -1,6 +1,7 @@
 import {
   AdvancedTagsPatterns,
   AdvancedTagsProps,
+  CombinedPatterns,
   TagsPatterns,
   TagsProps,
   checkFileToAdvanceAnalyzer,
@@ -8,26 +9,51 @@ import {
   readFile,
 } from "../../index.js";
 
+const mergePatterns = (
+  file: string,
+  firstPattern: TagsPatterns,
+  secondPattern: AdvancedTagsPatterns | undefined
+): CombinedPatterns => {
+  let combined: CombinedPatterns = {};
+
+  Object.entries(firstPattern).forEach(([entryFile, value]) => {
+    if (file === entryFile) {
+      combined[entryFile] = { ...value };
+    }
+  });
+
+  if (secondPattern) {
+    Object.entries(secondPattern).forEach(([entryFile, value]) => {
+      if (file === entryFile) {
+        combined[entryFile] = {
+          ...combined[entryFile],
+          ...value,
+        };
+      }
+    });
+  }
+
+  return { ...combined };
+};
+
 export const checkFiles = ({
   file,
   tags,
   advancedTags,
-  tagsPatterns,
-  advancedTagsPatterns,
   countKeywords,
   countWordsInLast,
 }: {
   file: string;
   tags: TagsProps;
   advancedTags?: AdvancedTagsProps;
-  tagsPatterns: TagsPatterns;
-  advancedTagsPatterns: AdvancedTagsPatterns;
   countKeywords: boolean;
   countWordsInLast: boolean;
-}) => {
+}): CombinedPatterns => {
   const _fileContent = readFile(file);
   const fileContent = _fileContent.replace(/\n\s*/g, " ");
-  const basicAnalyze = checkFileToBasicAnalyzer({
+  let tagsPatterns: TagsPatterns = {};
+  let advancedTagsPatterns: AdvancedTagsPatterns = {};
+  const firstPatterns = checkFileToBasicAnalyzer({
     file,
     fileContent,
     tags,
@@ -35,12 +61,13 @@ export const checkFiles = ({
     countKeywords,
     countWordsInLast,
   });
-  const advancedAnalyze = checkFileToAdvanceAnalyzer({
+
+  const secondPatterns = checkFileToAdvanceAnalyzer({
     file,
     fileContent,
     advancedTags,
     advancedTagsPatterns,
   });
 
-  return { basicAnalyze, advancedAnalyze };
+  return mergePatterns(file, firstPatterns, secondPatterns);
 };

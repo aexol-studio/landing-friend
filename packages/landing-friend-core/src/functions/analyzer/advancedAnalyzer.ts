@@ -5,6 +5,7 @@ import {
   forbiddenCharacters as _forbiddenCharacters,
   AdvancedTagsName,
   AdvancedTagsPatterns,
+  MetaNameWithProps,
 } from "../../index.js";
 
 interface MatchedArrayProps {
@@ -16,21 +17,31 @@ const matchedTags = (advancedTags: AdvancedTagsName, fileContent: string) => {
   const matchedArray: { [tagName: string]: MatchedArrayProps }[] = [];
 
   if (advancedTags === "og") {
-    regex = new RegExp(`<meta property="og:(.*?)" content="(.*?)"`, "gs");
+    regex = new RegExp(
+      `<meta property=\"og:(.*?)\" content=\"(.*?)\" />`,
+      "gs"
+    );
   } else if (advancedTags === "twitter") {
-    regex = new RegExp(`<meta name="twitter:(.*?)" content="(.*?)"`, "gs");
+    regex = new RegExp(
+      `<meta name=\"twitter:(.*?)\" content=\"(.*?)\" />`,
+      "gs"
+    );
   }
 
   if (regex) {
     const matches = fileContent.match(regex);
     if (matches) {
       matches.forEach((match) => {
+        let tagObject: { [x: string]: { content: string } };
         const captureGroups = regex!.exec(match);
         if (captureGroups) {
           const tagName = captureGroups[1];
           const content = captureGroups[2];
-          const tagObject = { [tagName]: { content } };
+          tagObject = { [tagName]: { content } };
+
           matchedArray.push(tagObject);
+
+          regex!.lastIndex = 0;
         }
       });
     }
@@ -60,6 +71,7 @@ export const checkFileToAdvanceAnalyzer = ({
     const matches = matchedTags(tag, fileContent);
 
     if (matches) {
+      let listOfFoundMeta: MetaNameWithProps = {};
       matches.forEach((match) => {
         Object.entries(match).map(([metaName, value]) => {
           let content: string;
@@ -80,16 +92,21 @@ export const checkFileToAdvanceAnalyzer = ({
           const forbiddenCharacters = _forbiddenCharacters.filter((char) =>
             content.includes(char)
           );
-          updatedTagsPatterns = advancedTagsPatterns[file] = {
-            ...advancedTagsPatterns[file],
-            [tag]: {
-              tagAmount: matches.length,
-              metaName,
+          const metaObject: MetaNameWithProps = {
+            [metaName]: {
               content: value.content,
               forbiddenCharacters,
             },
           };
+          listOfFoundMeta = { ...listOfFoundMeta, ...metaObject };
         });
+        updatedTagsPatterns = advancedTagsPatterns[file] = {
+          ...advancedTagsPatterns[file],
+          [tag]: {
+            tagAmount: matches.length,
+            listOfFoundMeta,
+          },
+        };
       });
     } else {
       updatedTagsPatterns = advancedTagsPatterns[file] = {
@@ -100,5 +117,7 @@ export const checkFileToAdvanceAnalyzer = ({
       };
     }
   });
+  // console.log(JSON.stringify(advancedTagsPatterns, null, 2));
+
   return { ...advancedTagsPatterns, [file]: updatedTagsPatterns };
 };

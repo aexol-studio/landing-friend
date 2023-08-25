@@ -6,14 +6,14 @@ import {
   TagsProps,
   getFilesToAnalyze,
   matchedSetting,
-  saveAnalyze,
   message,
   forbiddenCharacters as _forbiddenCharacters,
-  TagsPatterns,
-  AdvancedTagsPatterns,
   checkFiles,
   prepareHTMLWithTables,
-  BasicTagsName,
+  CombinedPatterns,
+  AllTagsName,
+  saveAnalyze,
+  CombineTagsWithReason,
 } from "./index.js";
 
 export const websiteAnalyzer = (config: ConfigFile) => {
@@ -28,57 +28,60 @@ export const websiteAnalyzer = (config: ConfigFile) => {
 
   const analyze = async () => {
     const allFiles = getFilesToAnalyze(input);
-    let tagsPatterns: TagsPatterns = {};
-    let advancedTagsPatterns: AdvancedTagsPatterns = {};
+    let combinedTagsPatternsArray: CombinedPatterns[] = [];
 
     allFiles.forEach((file) => {
       if (!matchedSetting(file, excludedPage, input)) {
-        const allTagsPatterns = checkFiles({
-          file,
-          tags,
-          advancedTags,
-          tagsPatterns,
-          advancedTagsPatterns,
-          countKeywords: tags.keywords.count,
-          countWordsInLast: tags.lastSentence.count,
-        });
-        tagsPatterns = allTagsPatterns.basicAnalyze;
-        if (allTagsPatterns.advancedAnalyze) {
-          advancedTagsPatterns = allTagsPatterns.advancedAnalyze;
-        }
+        combinedTagsPatternsArray.push(
+          checkFiles({
+            file,
+            tags,
+            advancedTags,
+            countKeywords: tags.keywords.count,
+            countWordsInLast: tags.lastSentence.count,
+          })
+        );
       }
     });
 
     const htmlWithTablesAndCharts = prepareHTMLWithTables(
-      {
-        tagsPatterns,
-        advancedTagsPatterns,
-      },
-      tags.keywords.count
+      combinedTagsPatternsArray
     );
 
     if (analyzer) {
-      let cleanedTagsPatterns: TagsPatterns = {};
-      Object.entries(tagsPatterns).forEach(([file, tagData]) => {
-        cleanedTagsPatterns[file] = { ...cleanedTagsPatterns[file] };
-        Object.entries(tagData).forEach(([_tag, value]) => {
-          const tag = _tag as BasicTagsName;
-          if (
-            !(tag === "keywords" && !value.countKeywords) &&
-            !(tag === "lastSentence" && !value.countWordsInLast)
-          ) {
-            cleanedTagsPatterns[file][tag] = {
-              requirement:
-                value.requirement &&
-                value.requirement.replace(/<\/?strong>/gs, ""),
-              quantity: value.quantity,
-              content: value.content,
-              forbiddenCharacters: value.forbiddenCharacters,
-              keywordsIncluded:
-                tag !== "keywords" ? value.keywordsIncluded : undefined,
-              multipleTags: value.multipleTags,
-            };
-          }
+      let cleanedTagsPatterns: CombinedPatterns = {};
+      combinedTagsPatternsArray.forEach((combinedTagsPatterns) => {
+        Object.entries(combinedTagsPatterns).forEach(([file, tagData]) => {
+          let tagArray = {} as Record<AllTagsName, CombineTagsWithReason>;
+          Object.entries(tagData).forEach(([_tag, _value]) => {
+            const tag = _tag as AllTagsName;
+            const value = _value as CombineTagsWithReason;
+            if (
+              !(tag === "keywords" && !value.countKeywords) &&
+              !(tag === "lastSentence" && !value.countWordsInLast)
+            ) {
+              tagArray = {
+                ...tagArray,
+                [tag]: {
+                  requirement:
+                    value.requirement &&
+                    value.requirement.replace(/<\/?strong>/gs, ""),
+                  quantity: value.quantity,
+                  content: value.content,
+                  forbiddenCharacters: value.forbiddenCharacters,
+                  keywordsIncluded:
+                    tag !== "keywords" ? value.keywordsIncluded : undefined,
+                  multipleTags: value.multipleTags,
+                  tagAmount:
+                    tag === "og" || tag === "twitter"
+                      ? value.tagAmount
+                      : undefined,
+                  listOfFoundMeta: value.listOfFoundMeta,
+                } as CombineTagsWithReason,
+              } as Record<AllTagsName, CombineTagsWithReason>;
+            }
+          });
+          cleanedTagsPatterns[file] = tagArray;
         });
       });
       try {

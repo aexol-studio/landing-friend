@@ -6,7 +6,7 @@ export type AdditionalTagsName = "lastSentence" | "keywords";
 
 export type BasicTagsName = TagsName | AdditionalTagsName;
 
-export type AllTagsName = BasicTagsName | AdditionalTagsName;
+export type AllTagsName = BasicTagsName | AdvancedTagsName;
 
 export type TagsProps = Record<
   TagsName,
@@ -19,7 +19,7 @@ export type TagsProps = Record<
 
 export type AdvancedTagsProps = Record<AdvancedTagsName, boolean>;
 
-export type TagsWithReason = {
+export interface TagsWithReason {
   quantity: number;
   minLength?: number;
   maxLength?: number;
@@ -30,14 +30,25 @@ export type TagsWithReason = {
   multipleTags?: boolean;
   keywordsIncluded?: string[];
   forbiddenCharacters?: string[];
+}
+
+export interface MetaNameTagsProps {
+  content?: string;
+  forbiddenCharacters?: string[];
+}
+
+export type MetaNameWithProps = {
+  [metaName in AdditionalTagsName]?: MetaNameTagsProps;
 };
 
-export type AdvancedTagsWithReason = {
+export interface AdvancedTagsWithReason {
   tagAmount: number;
-  content?: string;
-  metaName?: string;
-  forbiddenCharacters?: string[];
-};
+  listOfFoundMeta?: MetaNameWithProps;
+}
+
+export interface CombineTagsWithReason
+  extends TagsWithReason,
+    AdvancedTagsWithReason {}
 
 export type TagsPatterns = Record<string, Record<AllTagsName, TagsWithReason>>;
 
@@ -46,4 +57,12 @@ export type AdvancedTagsPatterns = Record<
   Record<AdvancedTagsName, AdvancedTagsWithReason>
 >;
 
-export type CombineTagsPatterns = TagsPatterns | AdvancedTagsPatterns;
+export type CombinedPatterns = {
+  [key: string]:
+    | {
+        [tag in BasicTagsName]: TagsWithReason;
+      }
+    | {
+        [tag in AdvancedTagsName]?: AdvancedTagsWithReason;
+      };
+};

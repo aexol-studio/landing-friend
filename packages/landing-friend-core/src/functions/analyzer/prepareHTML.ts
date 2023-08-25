@@ -1,4 +1,8 @@
-import { AdvancedTagsPatterns, TagsPatterns } from "../../index.js";
+import {
+  AllTagsName,
+  CombineTagsWithReason,
+  CombinedPatterns,
+} from "../../index.js";
 
 type KeywordsTagsProps = Record<string, string[]>;
 
@@ -7,15 +11,19 @@ const arrayFilleter = (firstArray: string[], secondArray: string[]) => {
 };
 
 export const generateTableRows = (
-  tagsPatterns: TagsPatterns,
-  advancedTagsPatterns: AdvancedTagsPatterns,
-  countKeywords: boolean
-) => {
-  return Object.entries(tagsPatterns)
+  combinedTagsPatterns: CombinedPatterns
+): string => {
+  return Object.entries(combinedTagsPatterns)
     .map(([file, tagData]) => {
       let keywordsToTags: KeywordsTagsProps = {};
-      Object.entries(tagData).forEach(([tag, value]) => {
-        if (tag !== "keywords" && value.keywordsIncluded && countKeywords) {
+      Object.entries(tagData).forEach(([_tag, _value]) => {
+        const tag = _tag as AllTagsName;
+        const value = _value as CombineTagsWithReason;
+        if (
+          tag !== "keywords" &&
+          value.keywordsIncluded &&
+          value.countKeywords
+        ) {
           keywordsToTags[tag] = value.keywordsIncluded;
         }
       });
@@ -50,7 +58,9 @@ export const generateTableRows = (
       );
 
       const rows = Object.entries(tagData)
-        .map(([tag, value]) => {
+        .map(([_tag, _value]) => {
+          const tag = _tag as AllTagsName;
+          const value = _value as CombineTagsWithReason;
           return `
               <tbody>
           <tr>
@@ -121,7 +131,7 @@ export const generateTableRows = (
                     : ``
                   : ``
               }
-              
+
               </tr>
               `;
         })
@@ -221,18 +231,13 @@ export const generateTableRows = (
 };
 
 export const prepareHTMLWithTables = (
-  data: {
-    tagsPatterns: TagsPatterns;
-    advancedTagsPatterns: AdvancedTagsPatterns;
-  },
-  countKeywords: boolean
-) => {
-  const { tagsPatterns, advancedTagsPatterns } = data;
-  const brokenTagsTable = generateTableRows(
-    tagsPatterns,
-    advancedTagsPatterns,
-    countKeywords
-  );
+  combinedTagsPatterns: CombinedPatterns[]
+): string => {
+  let brokenTagsTable: string = "";
+
+  combinedTagsPatterns.map((combinedTagsPattern) => {
+    brokenTagsTable = brokenTagsTable + generateTableRows(combinedTagsPattern);
+  });
 
   return `<!DOCTYPE html>
     <html>
@@ -258,7 +263,7 @@ export const prepareHTMLWithTables = (
             width: 100%;
             animation: fadeIn 0.5s ease-in-out;
             }
-          th, 
+          th,
           td {
             border: 1px solid black;
             padding: 8px;
