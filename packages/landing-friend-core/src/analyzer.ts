@@ -4,7 +4,6 @@ import {
   AdvancedTagsProps,
   ConfigFile,
   TagsProps,
-  getFilesToAnalyze,
   matchedSetting,
   message,
   forbiddenCharacters as _forbiddenCharacters,
@@ -14,6 +13,7 @@ import {
   AllTagsName,
   saveAnalyze,
   CombineTagsWithReason,
+  getHtmlFiles,
 } from "./index.js";
 
 export const websiteAnalyzer = (config: ConfigFile) => {
@@ -27,14 +27,24 @@ export const websiteAnalyzer = (config: ConfigFile) => {
   const advancedTags: AdvancedTagsProps | undefined = advancedAnalyzer;
 
   const analyze = async () => {
-    const allFiles = getFilesToAnalyze(input);
+    const allHtmlFiles = getHtmlFiles(input, false);
     let combinedTagsPatternsArray: CombinedPatterns[] = [];
 
-    allFiles.forEach((file) => {
-      if (!matchedSetting(file, excludedPage, input)) {
+    allHtmlFiles.forEach((file) => {
+      if (
+        !matchedSetting(
+          file
+            .replace("\\", "/")
+            .replace(/\.html|\.php/g, "")
+            .replace(/index/g, "")
+            .replace(/\/$/g, ""),
+          excludedPage
+        )
+      ) {
         combinedTagsPatternsArray.push(
           checkFiles({
             file,
+            input,
             tags,
             advancedTags,
             countKeywords: tags.keywords.count,

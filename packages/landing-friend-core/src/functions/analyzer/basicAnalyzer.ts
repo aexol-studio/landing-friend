@@ -11,6 +11,7 @@ import {
 const checkContent = (tagName: BasicTagsName, fileContent: string) => {
   let regex: RegExp | undefined;
   let matches: RegExpMatchArray | null = null;
+
   if (tagName === "description") {
     regex = new RegExp(`<meta name="description" content="(.*?)"`, "g");
   } else if (tagName === "keywords") {
@@ -31,7 +32,6 @@ const checkContent = (tagName: BasicTagsName, fileContent: string) => {
 
     if (matches) {
       const updatedMatches = [...matches];
-
       updatedMatches.forEach((match, index) => {
         let captureGroups = regex!.exec(match);
         if (captureGroups) {

@@ -2,26 +2,18 @@ import { message } from "../../index.js";
 import fs from "fs";
 import path from "path";
 
-export const getHtmlFiles = (base: string) => {
+export const getHtmlFiles = (base: string, deleteFileExtension: boolean) => {
   const baseWithoutDot = base.replace(/\.\//g, "");
+
   return getDirectories(base)
     .map((file) => {
       const relativePath = file.replace(baseWithoutDot, "");
       return relativePath.replace(/\\/g, "/");
     })
     .filter((file) => file.endsWith(".html") || file.endsWith(".php"))
-    .map((file) => file.replace(".html", ""));
-};
-
-export const getFilesToAnalyze = (base: string) => {
-  return getDirectories(base)
-    .map((file) => file.replace(/\\/g, "/"))
-    .filter((file) => file.endsWith(".html") || file.endsWith(".php"))
-    .map((file) => {
-      const relativePath = file.replace(/\\/g, "/");
-      const pathToFileOpen = path.join(process.cwd(), relativePath);
-      return pathToFileOpen;
-    });
+    .map((file) =>
+      deleteFileExtension ? file.replace(/\.html|\.php/g, "") : file
+    );
 };
 
 export const getDirectories = (dir: string, fileList = [] as string[]) => {
@@ -71,23 +63,9 @@ export const saveOldSitemap = (filePath: string, newFilePath: string) => {
   }
 };
 
-export const matchedSetting = (
-  file: string,
-  paths: string[],
-  input?: string
-) => {
-  if (input) {
-    const fileWithoutIndex = file
-      .replace(".html", "")
-      .replace("index", "")
-      .replace(process.cwd() + input.replace("./", "/"), "");
-    file = fileWithoutIndex.endsWith("/")
-      ? fileWithoutIndex
-      : fileWithoutIndex + "/";
-  }
-  {
-    file = file.endsWith("/") ? file : file + "/";
-  }
+export const matchedSetting = (file: string, paths: string[]) => {
+  file = file.endsWith("/") ? file : file + "/";
+  console.log(file);
 
   if (paths.length > 0) {
     if (
@@ -95,8 +73,8 @@ export const matchedSetting = (
         const regexPattern = path
           .replace(/\/$/g, "/$")
           .replace(/^\.\//g, `^\/`)
-          .replace("*/", "/")
-          .replace("/*", "/");
+          .replace("*/", `\/`)
+          .replace("/*", `\/`);
         return file.match(new RegExp(regexPattern, "g")) !== null;
       })
     ) {

@@ -61,6 +61,7 @@ export const generateTableRows = (
         .map(([_tag, _value]) => {
           const tag = _tag as AllTagsName;
           const value = _value as CombineTagsWithReason;
+
           return `
               <tbody>
           <tr>
@@ -152,7 +153,6 @@ export const generateTableRows = (
                   )}
                   `
               }
-
               </tr>
               `;
         })

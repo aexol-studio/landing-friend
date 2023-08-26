@@ -1,3 +1,4 @@
+import path from "path";
 import {
   AdvancedTagsPatterns,
   AdvancedTagsProps,
@@ -38,23 +39,28 @@ const mergePatterns = (
 
 export const checkFiles = ({
   file,
+  input,
   tags,
   advancedTags,
   countKeywords,
   countWordsInLast,
 }: {
   file: string;
+  input: string;
   tags: TagsProps;
   advancedTags?: AdvancedTagsProps;
   countKeywords: boolean;
   countWordsInLast: boolean;
 }): CombinedPatterns => {
-  const _fileContent = readFile(file);
-  const fileContent = _fileContent.replace(/\n\s*/g, " ");
+  const _fileContent = readFile(
+    path.join(process.cwd(), input.replace(/\.\//g, ""), file)
+  );
+  const fileContent = _fileContent.replace(/\r?\n\s*/g, " ");
+
   let tagsPatterns: TagsPatterns = {};
   let advancedTagsPatterns: AdvancedTagsPatterns = {};
   const firstPatterns = checkFileToBasicAnalyzer({
-    file,
+    file: file.replace("\\", "/"),
     fileContent,
     tags,
     tagsPatterns,
@@ -63,7 +69,7 @@ export const checkFiles = ({
   });
 
   const secondPatterns = checkFileToAdvanceAnalyzer({
-    file,
+    file: file.replace("\\", "/"),
     fileContent,
     advancedTags,
     advancedTagsPatterns,

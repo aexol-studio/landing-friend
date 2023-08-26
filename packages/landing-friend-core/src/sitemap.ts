@@ -25,7 +25,7 @@ export const sitemapGenerator = (config: ConfigFile) => {
   const { domain, input, output, sitemap, excludedPage } = config;
 
   const generateSitemap = () => {
-    const allHtmlFiles = getHtmlFiles(input);
+    const allHtmlFiles = getHtmlFiles(input, true);
     const allLocales = ISO.getAllCodes();
 
     const isThereAnyLocale = allLocales.some((locale) =>

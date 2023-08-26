@@ -117,7 +117,6 @@ export const checkFileToAdvanceAnalyzer = ({
       };
     }
   });
-  // console.log(JSON.stringify(advancedTagsPatterns, null, 2));
 
   return { ...advancedTagsPatterns, [file]: updatedTagsPatterns };
 };
