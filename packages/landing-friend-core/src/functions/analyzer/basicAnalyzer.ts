@@ -63,23 +63,22 @@ export const checkFileToBasicAnalyzer = ({
   file,
   fileContent,
   tags,
-  tagsPatterns,
   countKeywords,
   countWordsInLast,
 }: {
   file: string;
   fileContent: string;
   tags: TagsProps;
-  tagsPatterns: TagsPatterns;
   countKeywords: boolean;
   countWordsInLast: boolean;
 }): TagsPatterns => {
+  let tagsPatterns: TagsPatterns = {};
   let updatedTagsPatterns = { ...tagsPatterns[file] };
   Object.entries(tags).forEach(([_tag, _value]) => {
     const tag = _tag as BasicTagsName;
     let value = _value as TagsWithReason;
     let keywordsArray: string[] | undefined = [];
-    if (countKeywords) {
+    if (tags.keywords.count) {
       const keywordsMatch = fileContent.match(
         new RegExp(`<meta property="keywords" content="(.*?)"`, "g")
       );
@@ -105,8 +104,6 @@ export const checkFileToBasicAnalyzer = ({
             requirement: `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
             quantity: matches.length,
             multipleTags: true,
-            countKeywords,
-            countWordsInLast,
           },
         };
       } else {
@@ -133,7 +130,7 @@ export const checkFileToBasicAnalyzer = ({
               content: text,
               multipleTags: undefined,
               keywordsIncluded:
-                tag !== "keywords" || countKeywords
+                tag !== "keywords" || tags.keywords.count
                   ? keywordsArray?.filter((keyword) =>
                       text.toLowerCase().includes(keyword.toLowerCase())
                     )
@@ -142,8 +139,6 @@ export const checkFileToBasicAnalyzer = ({
                 forbiddenCharacters.length > 0
                   ? forbiddenCharacters
                   : undefined,
-              countKeywords,
-              countWordsInLast,
             },
           };
         });
@@ -160,8 +155,6 @@ export const checkFileToBasicAnalyzer = ({
               ? `Tag should contain the same keywords as upper tags`
               : `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
           quantity: NaN,
-          countKeywords,
-          countWordsInLast,
         },
       };
     }

@@ -57,13 +57,10 @@ export const checkFiles = ({
   );
   const fileContent = _fileContent.replace(/\r?\n\s*/g, " ");
 
-  let tagsPatterns: TagsPatterns = {};
-  let advancedTagsPatterns: AdvancedTagsPatterns = {};
   const firstPatterns = checkFileToBasicAnalyzer({
     file: file.replace("\\", "/"),
     fileContent,
     tags,
-    tagsPatterns,
     countKeywords,
     countWordsInLast,
   });
@@ -72,7 +69,6 @@ export const checkFiles = ({
     file: file.replace("\\", "/"),
     fileContent,
     advancedTags,
-    advancedTagsPatterns,
   });
 
   return mergePatterns(file, firstPatterns, secondPatterns);

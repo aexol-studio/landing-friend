@@ -23,8 +23,6 @@ export interface TagsWithReason {
   quantity: number;
   minLength?: number;
   maxLength?: number;
-  countKeywords?: boolean;
-  countWordsInLast?: boolean;
   content?: string;
   requirement?: string;
   multipleTags?: boolean;

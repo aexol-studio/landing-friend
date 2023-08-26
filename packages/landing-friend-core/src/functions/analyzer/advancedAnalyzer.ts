@@ -18,12 +18,12 @@ const matchedTags = (advancedTags: AdvancedTagsName, fileContent: string) => {
 
   if (advancedTags === "og") {
     regex = new RegExp(
-      `<meta property=\"og:(.*?)\" content=\"(.*?)\" />`,
+      `<meta property=\"og:(.*?)\" content=\"(.*?)\".*?/>`,
       "gs"
     );
   } else if (advancedTags === "twitter") {
     regex = new RegExp(
-      `<meta name=\"twitter:(.*?)\" content=\"(.*?)\" />`,
+      `<meta name=\"twitter:(.*?)\" content=\"(.*?)\".*?/>`,
       "gs"
     );
   }
@@ -54,16 +54,16 @@ export const checkFileToAdvanceAnalyzer = ({
   file,
   fileContent,
   advancedTags,
-  advancedTagsPatterns,
 }: {
   file: string;
   fileContent: string;
   advancedTags?: AdvancedTagsProps;
-  advancedTagsPatterns: AdvancedTagsPatterns;
 }): AdvancedTagsPatterns | undefined => {
   if (!advancedTags) {
     return;
   }
+
+  let advancedTagsPatterns: AdvancedTagsPatterns = {};
   let updatedTagsPatterns = { ...advancedTagsPatterns[file] };
   Object.entries(advancedTags).forEach(([_tag, value]) => {
     if (!value) return;

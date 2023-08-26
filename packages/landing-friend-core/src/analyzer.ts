@@ -54,9 +54,11 @@ export const websiteAnalyzer = (config: ConfigFile) => {
       }
     });
 
-    const htmlWithTablesAndCharts = prepareHTMLWithTables(
-      combinedTagsPatternsArray
-    );
+    const htmlWithTablesAndCharts = prepareHTMLWithTables({
+      combinedTagsPatterns: combinedTagsPatternsArray,
+      countKeywords: tags.keywords.count,
+      countWordsInLast: tags.lastSentence.count,
+    });
 
     if (analyzer) {
       let cleanedTagsPatterns: CombinedPatterns = {};
@@ -67,8 +69,8 @@ export const websiteAnalyzer = (config: ConfigFile) => {
             const tag = _tag as AllTagsName;
             const value = _value as CombineTagsWithReason;
             if (
-              !(tag === "keywords" && !value.countKeywords) &&
-              !(tag === "lastSentence" && !value.countWordsInLast)
+              !(tag === "keywords" && tags.keywords.count) &&
+              !(tag === "lastSentence" && tags.lastSentence.count)
             ) {
               tagArray = {
                 ...tagArray,

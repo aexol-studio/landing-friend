@@ -10,20 +10,22 @@ const arrayFilleter = (firstArray: string[], secondArray: string[]) => {
   return firstArray.filter((element) => !secondArray.includes(element));
 };
 
-export const generateTableRows = (
-  combinedTagsPatterns: CombinedPatterns
-): string => {
+export const generateTableRows = ({
+  combinedTagsPatterns,
+  countKeywords,
+  countWordsInLast,
+}: {
+  combinedTagsPatterns: CombinedPatterns;
+  countKeywords: boolean;
+  countWordsInLast: boolean;
+}): string => {
   return Object.entries(combinedTagsPatterns)
     .map(([file, tagData]) => {
       let keywordsToTags: KeywordsTagsProps = {};
       Object.entries(tagData).forEach(([_tag, _value]) => {
         const tag = _tag as AllTagsName;
         const value = _value as CombineTagsWithReason;
-        if (
-          tag !== "keywords" &&
-          value.keywordsIncluded &&
-          value.countKeywords
-        ) {
+        if (tag !== "keywords" && value.keywordsIncluded && countKeywords) {
           keywordsToTags[tag] = value.keywordsIncluded;
         }
       });
@@ -70,8 +72,8 @@ export const generateTableRows = (
                   (tag === "og" && value.listOfFoundMeta) ||
                   (tag === "twitter" && value.listOfFoundMeta)
                 )
-                  ? !(tag === "keywords" && !value.countKeywords)
-                    ? !(tag === "lastSentence" && !value.countWordsInLast)
+                  ? !(tag === "keywords" && !countKeywords)
+                    ? !(tag === "lastSentence" && !countWordsInLast)
                       ? !isNaN(value.quantity)
                         ? value.maxLength && value.minLength
                           ? value.multipleTags
@@ -98,7 +100,7 @@ export const generateTableRows = (
                                   ? "color: black"
                                   : "color: red"
                               }">${value.requirement}</span></td>`
-                          : value.countWordsInLast && tag === "lastSentence"
+                          : countWordsInLast && tag === "lastSentence"
                           ? `<td>List of <strong>${
                               tag === "lastSentence" &&
                               "Last sentence on website"
@@ -251,13 +253,25 @@ export const generateTableRows = (
     .join("");
 };
 
-export const prepareHTMLWithTables = (
-  combinedTagsPatterns: CombinedPatterns[]
-): string => {
+export const prepareHTMLWithTables = ({
+  combinedTagsPatterns,
+  countKeywords,
+  countWordsInLast,
+}: {
+  combinedTagsPatterns: CombinedPatterns[];
+  countKeywords: boolean;
+  countWordsInLast: boolean;
+}): string => {
   let brokenTagsTable: string = "";
 
   combinedTagsPatterns.map((combinedTagsPattern) => {
-    brokenTagsTable = brokenTagsTable + generateTableRows(combinedTagsPattern);
+    brokenTagsTable =
+      brokenTagsTable +
+      generateTableRows({
+        combinedTagsPatterns: combinedTagsPattern,
+        countKeywords,
+        countWordsInLast,
+      });
   });
 
   return `<!DOCTYPE html>

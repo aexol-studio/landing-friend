@@ -65,8 +65,6 @@ export const saveOldSitemap = (filePath: string, newFilePath: string) => {
 
 export const matchedSetting = (file: string, paths: string[]) => {
   file = file.endsWith("/") ? file : file + "/";
-  console.log(file);
-
   if (paths.length > 0) {
     if (
       paths.find((path) => {
