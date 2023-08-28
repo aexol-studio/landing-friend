@@ -33,6 +33,7 @@ export interface TagsWithReason {
 export interface MetaNameTagsProps {
   content?: string;
   forbiddenCharacters?: string[];
+  status?: string;
 }
 
 export type MetaNameWithProps = {

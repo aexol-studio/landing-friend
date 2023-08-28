@@ -77,7 +77,7 @@ export const generateTableRows = ({
                       ? !isNaN(value.quantity)
                         ? value.maxLength && value.minLength
                           ? value.multipleTags
-                            ? `<td><strong style="color: red">Warning! Number of ${tag} on the page: ${value.quantity}</strong></td><td width="20%"><strong style="color: red">Check the code</strong></td>`
+                            ? `<td><strong style="color: red">Warning! Number of multiple ${tag} on the page: ${value.quantity}</strong></td><td width="20%"><strong style="color: red">Check the code</strong></td>`
                             : `<td>Length of <strong>${tag}</strong>: <strong style="${
                                 value.quantity >= value.minLength &&
                                 value.quantity <= value.maxLength
@@ -142,17 +142,22 @@ export const generateTableRows = ({
                   <tr><td colspan="2"><strong>List of advanced meta tag <span style="color:green">${tag} (Number of tags: ${
                       value.tagAmount
                     })</span></strong> </td></tr>
-                  ${Object.entries(value.listOfFoundMeta).map(
-                    ([title, prop]) => {
-                      return `<tr><td colspan="2">Content of <strong style="color:green">${title}</strong>: ${
-                        prop?.content
-                      } ${
-                        prop?.forbiddenCharacters
-                          ? `<span style="color:red">${prop.forbiddenCharacters}</span>`
+                    ${Object.entries(value.listOfFoundMeta)
+                      .map(([title, metaValue]) => {
+                        return `<tr><td colspan="2">Content of <strong style="color:green">${title}</strong>: ${
+                          metaValue?.content
+                            ? metaValue.content
+                            : `No content detected`
+                        } 
+                      ${
+                        metaValue?.forbiddenCharacters
+                          ? `<span style="color:red">${metaValue.forbiddenCharacters}</span>`
                           : ``
-                      } </td></tr>`;
-                    }
-                  )}
+                      } 
+                      </td></tr>`;
+                      })
+                      .join("")}
+                  
                   `
               }
               </tr>

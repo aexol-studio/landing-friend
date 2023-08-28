@@ -59,9 +59,7 @@ export const checkFileToAdvanceAnalyzer = ({
   fileContent: string;
   advancedTags?: AdvancedTagsProps;
 }): AdvancedTagsPatterns | undefined => {
-  if (!advancedTags) {
-    return;
-  }
+  if (!advancedTags) return;
 
   let advancedTagsPatterns: AdvancedTagsPatterns = {};
   let updatedTagsPatterns = { ...advancedTagsPatterns[file] };
@@ -72,9 +70,11 @@ export const checkFileToAdvanceAnalyzer = ({
 
     if (matches) {
       let listOfFoundMeta: MetaNameWithProps = {};
+
       matches.forEach((match) => {
         Object.entries(match).map(([metaName, value]) => {
-          let content: string;
+          let content: string | undefined;
+          let status: string | undefined;
           staticTags.forEach((staticTag) => {
             const _content = value.content;
             const staticTagRegex = new RegExp(
@@ -89,13 +89,14 @@ export const checkFileToAdvanceAnalyzer = ({
             content = _content.replace(staticTagRegex, "");
           });
 
-          const forbiddenCharacters = _forbiddenCharacters.filter((char) =>
-            content.includes(char)
+          const forbiddenCharacters = _forbiddenCharacters.filter(
+            (char) => content && content.includes(char)
           );
           const metaObject: MetaNameWithProps = {
             [metaName]: {
-              content: value.content,
+              content,
               forbiddenCharacters,
+              status: status ? status : undefined,
             },
           };
           listOfFoundMeta = { ...listOfFoundMeta, ...metaObject };
