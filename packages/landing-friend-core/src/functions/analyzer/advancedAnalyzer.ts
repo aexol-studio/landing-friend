@@ -17,21 +17,15 @@ const matchedTags = (advancedTags: AdvancedTagsName, fileContent: string) => {
   const matchedArray: { [tagName: string]: MatchedArrayProps }[] = [];
 
   if (advancedTags === "og") {
-    regex = new RegExp(
-      `<meta property=\"og:(.*?)\" content=\"(.*?)\".*?/>`,
-      "gs"
-    );
+    regex = new RegExp('<meta property="og:(.*?)" content="(.*?)".*?/>', "gs");
   } else if (advancedTags === "twitter") {
-    regex = new RegExp(
-      `<meta name=\"twitter:(.*?)\" content=\"(.*?)\".*?/>`,
-      "gs"
-    );
+    regex = new RegExp('<meta name="twitter:(.*?)" content="(.*?)".*?/>', "gs");
   }
 
   if (regex) {
     const matches = fileContent.match(regex);
     if (matches) {
-      matches.forEach((match) => {
+      matches.forEach(match => {
         let tagObject: { [x: string]: { content: string } };
         const captureGroups = regex!.exec(match);
         if (captureGroups) {
@@ -50,7 +44,7 @@ const matchedTags = (advancedTags: AdvancedTagsName, fileContent: string) => {
   return matchedArray;
 };
 
-export const checkFileToAdvanceAnalyzer = ({
+export const checkFileToAdvanceAnalyzer = async ({
   file,
   fileContent,
   advancedTags,
@@ -58,40 +52,43 @@ export const checkFileToAdvanceAnalyzer = ({
   file: string;
   fileContent: string;
   advancedTags?: AdvancedTagsProps;
-}): AdvancedTagsPatterns | undefined => {
+}): Promise<AdvancedTagsPatterns | undefined> => {
   if (!advancedTags) return;
 
-  let advancedTagsPatterns: AdvancedTagsPatterns = {};
+  const advancedTagsPatterns: AdvancedTagsPatterns = {};
   let updatedTagsPatterns = { ...advancedTagsPatterns[file] };
-  Object.entries(advancedTags).forEach(([_tag, value]) => {
-    if (!value) return;
+  for (const [_tag, value] of Object.entries(advancedTags)) {
+    if (!value) continue;
     const tag = _tag as AdvancedTagsName;
     const matches = matchedTags(tag, fileContent);
 
     if (matches) {
       let listOfFoundMeta: MetaNameWithProps = {};
 
-      matches.forEach((match) => {
-        Object.entries(match).map(([metaName, value]) => {
+      for (const match of matches) {
+        for (const [metaName, value] of Object.entries(match)) {
           let content: string | undefined;
           let status: string | undefined;
-          staticTags.forEach((staticTag) => {
+
+          for (const staticTag of staticTags) {
             const _content = value.content;
-            const staticTagRegex = new RegExp(
-              `<${staticTag}.*?>|<\/${staticTag}>`,
-              "g"
-            );
-            Object.entries(unicode).forEach(([unicode, replacement]) => {
-              const unicodeRegex = new RegExp(`${unicode}`, "g");
+            const staticTagRegex = new RegExp(`<${staticTag}.*?>|</${staticTag}>`, "g");
+            for (const [_unicode, replacement] of Object.entries(unicode)) {
+              const unicodeRegex = new RegExp(`${_unicode}`, "g");
               content = _content.replace(unicodeRegex, replacement);
-            });
+            }
 
             content = _content.replace(staticTagRegex, "");
-          });
+          }
 
           const forbiddenCharacters = _forbiddenCharacters.filter(
-            (char) => content && content.includes(char)
+            char => content && content.includes(char)
           );
+          if (content && content.includes("https")) {
+            const response = await fetch(content);
+            status = response.statusText;
+          }
+
           const metaObject: MetaNameWithProps = {
             [metaName]: {
               content,
@@ -100,24 +97,25 @@ export const checkFileToAdvanceAnalyzer = ({
             },
           };
           listOfFoundMeta = { ...listOfFoundMeta, ...metaObject };
-        });
-        updatedTagsPatterns = advancedTagsPatterns[file] = {
-          ...advancedTagsPatterns[file],
+        }
+        updatedTagsPatterns = {
+          ...updatedTagsPatterns,
           [tag]: {
             tagAmount: matches.length,
             listOfFoundMeta,
           },
         };
-      });
+      }
     } else {
-      updatedTagsPatterns = advancedTagsPatterns[file] = {
-        ...advancedTagsPatterns[file],
+      updatedTagsPatterns = {
+        ...updatedTagsPatterns,
         [tag]: {
           tagAmount: NaN,
         },
       };
     }
-  });
+  }
 
+  advancedTagsPatterns[file] = updatedTagsPatterns;
   return { ...advancedTagsPatterns, [file]: updatedTagsPatterns };
 };

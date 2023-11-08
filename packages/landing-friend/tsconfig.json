@@ -1,39 +1,39 @@
 {
-    "compilerOptions": {
-      "sourceMap": true,
-      "target": "ESNext",
-      "module": "ESNext",
-      "moduleResolution": "NodeNext",
-      "resolveJsonModule": true,
-      "experimentalDecorators": true,
-      "skipLibCheck": true,
-      "declaration": true,
-      "incremental": true,
-      "removeComments": true,
-      "noUnusedLocals": true,
-      "strictNullChecks": true,
-      "esModuleInterop": true,
-      "allowSyntheticDefaultImports": true,
-      "allowJs": true,
-      "strict": true,
-      "composite": true,
-      "outDir": "./lib",
-      "lib": ["es6", "es7", "esnext", "dom"],
-      "rootDir": "./src",
-      "paths": {
-        "@/*": ["./*"]
-      },
-      "plugins": [
-        {
-          "transform": "typescript-transform-paths"
-        },
-        {
-          "transform": "typescript-transform-paths",
-          "afterDeclarations": true
-        }
-      ],
-      "baseUrl": "./src/"
+  "compilerOptions": {
+    "sourceMap": true,
+    "target": "ESNext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "resolveJsonModule": true,
+    "experimentalDecorators": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "incremental": true,
+    "removeComments": true,
+    "noUnusedLocals": true,
+    "strictNullChecks": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "allowJs": true,
+    "strict": true,
+    "composite": true,
+    "outDir": "./lib",
+    "lib": ["es6", "es7", "esnext", "dom"],
+    "rootDir": "./src",
+    "paths": {
+      "@/*": ["./*"]
     },
-    "include": ["**/*.ts", "**/*.tsx", "./src/**/*"],
-    "exclude": ["lib", "node_modules"]
-  }
+    "plugins": [
+      {
+        "transform": "typescript-transform-paths"
+      },
+      {
+        "transform": "typescript-transform-paths",
+        "afterDeclarations": true
+      }
+    ],
+    "baseUrl": "./src/"
+  },
+  "include": ["**/*.ts", "**/*.tsx", "./src/**/*"],
+  "exclude": ["lib", "node_modules"]
+}

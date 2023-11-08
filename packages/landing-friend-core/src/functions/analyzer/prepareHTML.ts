@@ -1,27 +1,34 @@
 import {
   AllTagsName,
+  BasicTagsName,
   CombineTagsWithReason,
   CombinedPatterns,
+  advancedTagsName,
 } from "../../index.js";
+import { generateMainSection } from "./sections/generateMainSection.js";
+import { generateMetaTagsSection } from "./sections/generateMetaTagsSection.js";
+import { generateMissingKeywordsSection } from "./sections/generateMissingKeywordsSection.js";
 
 type KeywordsTagsProps = Record<string, string[]>;
 
-const arrayFilleter = (firstArray: string[], secondArray: string[]) => {
-  return firstArray.filter((element) => !secondArray.includes(element));
-};
+interface DefaultGenerate {
+  countKeywords: boolean;
+  countWordsInLast: boolean;
+  advancedAnalyzer: boolean;
+}
 
-export const generateTableRows = ({
+type GenerateTable = DefaultGenerate & { combinedTagsPatterns: CombinedPatterns };
+type PrepareHtml = DefaultGenerate & { combinedTagsPatterns: CombinedPatterns[] };
+
+const generateTableRows = ({
   combinedTagsPatterns,
   countKeywords,
   countWordsInLast,
-}: {
-  combinedTagsPatterns: CombinedPatterns;
-  countKeywords: boolean;
-  countWordsInLast: boolean;
-}): string => {
+  advancedAnalyzer,
+}: GenerateTable): string => {
   return Object.entries(combinedTagsPatterns)
     .map(([file, tagData]) => {
-      let keywordsToTags: KeywordsTagsProps = {};
+      const keywordsToTags: KeywordsTagsProps = {};
       Object.entries(tagData).forEach(([_tag, _value]) => {
         const tag = _tag as AllTagsName;
         const value = _value as CombineTagsWithReason;
@@ -35,213 +42,34 @@ export const generateTableRows = ({
       const descriptionKeywords = keywordsToTags.description || [];
       const lastSentenceKeywords = keywordsToTags.lastSentence || [];
 
-      const missingTitleKeywords = arrayFilleter(h1Keywords, titleKeywords);
-
-      const missingDescriptionKeywords = arrayFilleter(
-        h1Keywords,
-        descriptionKeywords
-      );
-
-      const missingLastSentenceKeywords = arrayFilleter(
-        h1Keywords,
-        lastSentenceKeywords
-      );
-
-      const toMuchTitleKeywords = arrayFilleter(titleKeywords, h1Keywords);
-
-      const toMuchDescriptionKeywords = arrayFilleter(
-        descriptionKeywords,
-        h1Keywords
-      );
-
-      const toMuchLastSentenceKeywords = arrayFilleter(
-        lastSentenceKeywords,
-        h1Keywords
-      );
-
-      const rows = Object.entries(tagData)
+      const mainRow = Object.entries(tagData)
         .map(([_tag, _value]) => {
           const tag = _tag as AllTagsName;
           const value = _value as CombineTagsWithReason;
 
-          return `
-              <tbody>
-          <tr>
-              ${
-                !(
-                  (tag === "og" && value.listOfFoundMeta) ||
-                  (tag === "twitter" && value.listOfFoundMeta)
-                )
-                  ? !(tag === "keywords" && !countKeywords)
-                    ? !(tag === "lastSentence" && !countWordsInLast)
-                      ? !isNaN(value.quantity)
-                        ? value.maxLength && value.minLength
-                          ? value.multipleTags
-                            ? `<td><strong style="color: red">Warning! Number of multiple ${tag} on the page: ${value.quantity}</strong></td><td width="20%"><strong style="color: red">Check the code</strong></td>`
-                            : `<td>Length of <strong>${tag}</strong>: <strong style="${
-                                value.quantity >= value.minLength &&
-                                value.quantity <= value.maxLength
-                                  ? "color: black"
-                                  : "color: red"
-                              }">${value.quantity}</strong>${
-                                value.forbiddenCharacters &&
-                                value.forbiddenCharacters.length > 0
-                                  ? `<strong style="color:red">&nbsp;(Contains forbidden words: ${value.forbiddenCharacters})</strong>`
-                                  : ``
-                              }${
-                                value.keywordsIncluded
-                                  ? value.keywordsIncluded.length > 0
-                                    ? ` | <strong style="color:green">Keywords included: ${value.keywordsIncluded}</strong>`
-                                    : ` | <strong style="color:red">Does not contain keywords</strong>`
-                                  : ``
-                              }</td><td width="20%"><span style="${
-                                value.quantity >= value.minLength &&
-                                value.quantity <= value.maxLength
-                                  ? "color: black"
-                                  : "color: red"
-                              }">${value.requirement}</span></td>`
-                          : countWordsInLast && tag === "lastSentence"
-                          ? `<td>List of <strong>${
-                              tag === "lastSentence" &&
-                              "Last sentence on website"
-                            }</strong>: ${
-                              value.forbiddenCharacters &&
-                              value.forbiddenCharacters.length > 0
-                                ? `<strong style="color:red">&nbsp;(Contains forbidden words: ${value.forbiddenCharacters})</strong>`
-                                : ``
-                            }${
-                              value.keywordsIncluded
-                                ? value.keywordsIncluded.length > 0
-                                  ? ` | <strong style="color:green">Keywords included: ${value.keywordsIncluded}</strong>`
-                                  : ` | <strong style="color:red">Does not contain keywords</strong>`
-                                : ``
-                            }</strong></td><td>
-                          ${
-                            value.keywordsIncluded &&
-                            arrayFilleter(value.keywordsIncluded, h1Keywords)
-                              .length === 0 &&
-                            arrayFilleter(h1Keywords, value.keywordsIncluded)
-                              .length === 0
-                              ? `<span>${value.requirement}</span>`
-                              : `<strong style="color:red">${value.requirement}</strong>`
-                          }
-                         </td>`
-                          : `<td>List of <strong>${tag}</strong>: <strong>${value.content}</strong></td><td></td>`
-                        : `<td>${
-                            tag !== "keywords" ? `Length of ` : `List of `
-                          }<strong>${tag}</strong>: <strong style="color: red">${
-                            tag !== "keywords"
-                              ? `No characters detected`
-                              : `No words detected`
-                          }</strong></td><td width="20%"><strong style="color: red">${
-                            value.requirement
-                          }</strong></td>`
-                      : ``
-                    : ``
-                  : `
-                  <tr><td colspan="2"><strong>List of advanced meta tag <span style="color:green">${tag} (Number of tags: ${
-                      value.tagAmount
-                    })</span></strong> </td></tr>
-                    ${Object.entries(value.listOfFoundMeta)
-                      .map(([title, metaValue]) => {
-                        return `<tr><td colspan="2">Content of <strong style="color:green">${title}</strong>: ${
-                          metaValue?.content
-                            ? metaValue.content
-                            : `No content detected`
-                        } 
-                      ${
-                        metaValue?.forbiddenCharacters
-                          ? `<span style="color:red">${metaValue.forbiddenCharacters}</span>`
-                          : ``
-                      } 
-                      </td></tr>`;
-                      })
-                      .join("")}
-                  
-                  `
-              }
-              </tr>
-              `;
+          if (!(tag in advancedTagsName)) {
+            return `<tr>${generateMainSection({
+              countKeywords,
+              countWordsInLast,
+              h1Keywords,
+              tag: tag as BasicTagsName,
+              value,
+            })}</tr>`;
+          }
         })
         .join("");
 
-      const generateKeywordsSections = () => {
-        let sections = "";
+      const metaRow = Object.entries(tagData)
+        .map(([_tag, _value]) => {
+          if (!advancedAnalyzer) return;
+          const tag = _tag as AllTagsName;
+          const value = _value as CombineTagsWithReason;
 
-        const missingKeywordsHeader = `
-                <tr><td colspan="2"><strong style="color:red">Missing keywords: </strong></td></tr>
-              `;
-
-        const tooMuchKeywordsHeader = `
-                <tr><td colspan="2"><strong style="color:red">Too much keywords: </strong></td></tr>
-              `;
-
-        const generateMissingKeywordsSection = (
-          tag: string,
-          keywordsList: string[]
-        ) => {
-          if (keywordsList.length > 0) {
-            return `
-                    <tr><td colspan="2"><strong>${tag}</strong> : ${keywordsList}</td></tr>
-                  `;
+          if (tag in advancedTagsName) {
+            return generateMetaTagsSection({ tag: tag as advancedTagsName, value });
           }
-          return "";
-        };
-
-        const generateTooMuchKeywordsSection = (
-          tag: string,
-          keywordsList: string[]
-        ) => {
-          if (keywordsList.length > 0) {
-            return `
-                    <tr><td colspan="2"><strong>${tag}</strong> : ${keywordsList}</td></tr>
-                  `;
-          }
-          return "";
-        };
-
-        if (
-          missingTitleKeywords.length > 0 ||
-          missingDescriptionKeywords.length > 0 ||
-          missingLastSentenceKeywords.length > 0
-        ) {
-          sections += missingKeywordsHeader;
-          sections += generateMissingKeywordsSection(
-            "Title",
-            missingTitleKeywords
-          );
-          sections += generateMissingKeywordsSection(
-            "Description",
-            missingDescriptionKeywords
-          );
-          sections += generateMissingKeywordsSection(
-            "Last Sentence",
-            missingLastSentenceKeywords
-          );
-        }
-
-        if (
-          toMuchTitleKeywords.length > 0 ||
-          toMuchDescriptionKeywords.length > 0 ||
-          toMuchLastSentenceKeywords.length > 0
-        ) {
-          sections += tooMuchKeywordsHeader;
-          sections += generateTooMuchKeywordsSection(
-            "Title",
-            toMuchTitleKeywords
-          );
-          sections += generateTooMuchKeywordsSection(
-            "Description",
-            toMuchDescriptionKeywords
-          );
-          sections += generateTooMuchKeywordsSection(
-            "Last Sentence",
-            toMuchLastSentenceKeywords
-          );
-        }
-
-        return sections;
-      };
+        })
+        .join("");
 
       return `<thead>
           <tr>
@@ -249,10 +77,25 @@ export const generateTableRows = ({
           </tr>
           </thead>
           <tbody>
-          ${rows}
-          ${generateKeywordsSections()}
+          ${mainRow}
+          ${
+            countKeywords
+              ? generateMissingKeywordsSection({
+                  descriptionKeywords,
+                  h1Keywords,
+                  lastSentenceKeywords,
+                  titleKeywords,
+                })
+              : ""
+          }
+        ${
+          advancedAnalyzer
+            ? `<tr><td colspan="2" style="height:20px;"></td></tr>
+          ${metaRow}`
+            : ""
+        }
           </tbody>
-         <tr class="empty-row"></tr>
+         <tr class="empty-row"/>
           `;
     })
     .join("");
@@ -262,20 +105,17 @@ export const prepareHTMLWithTables = ({
   combinedTagsPatterns,
   countKeywords,
   countWordsInLast,
-}: {
-  combinedTagsPatterns: CombinedPatterns[];
-  countKeywords: boolean;
-  countWordsInLast: boolean;
-}): string => {
+  advancedAnalyzer,
+}: PrepareHtml): string => {
   let brokenTagsTable: string = "";
-
-  combinedTagsPatterns.map((combinedTagsPattern) => {
+  combinedTagsPatterns.map(combinedTagsPattern => {
     brokenTagsTable =
       brokenTagsTable +
       generateTableRows({
         combinedTagsPatterns: combinedTagsPattern,
         countKeywords,
         countWordsInLast,
+        advancedAnalyzer,
       });
   });
 

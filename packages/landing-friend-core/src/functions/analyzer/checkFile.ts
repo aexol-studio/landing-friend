@@ -15,7 +15,7 @@ const mergePatterns = (
   firstPattern: TagsPatterns,
   secondPattern: AdvancedTagsPatterns | undefined
 ): CombinedPatterns => {
-  let combined: CombinedPatterns = {};
+  const combined: CombinedPatterns = {};
 
   Object.entries(firstPattern).forEach(([entryFile, value]) => {
     if (file === entryFile) {
@@ -37,39 +37,36 @@ const mergePatterns = (
   return { ...combined };
 };
 
-export const checkFiles = ({
+export const checkFiles = async ({
   file,
   input,
   tags,
   advancedTags,
-  countKeywords,
-  countWordsInLast,
 }: {
   file: string;
   input: string;
   tags: TagsProps;
   advancedTags?: AdvancedTagsProps;
-  countKeywords: boolean;
-  countWordsInLast: boolean;
-}): CombinedPatterns => {
-  const _fileContent = readFile(
-    path.join(process.cwd(), input.replace(/\.\//g, ""), file)
-  );
+}): Promise<CombinedPatterns> => {
+  const _fileContent = readFile(path.join(process.cwd(), input.replace(/\.\//g, ""), file));
   const fileContent = _fileContent.replace(/\r?\n\s*/g, " ");
 
-  const firstPatterns = checkFileToBasicAnalyzer({
+  const firstPatternsPromise = checkFileToBasicAnalyzer({
     file: file.replace("\\", "/"),
     fileContent,
     tags,
-    countKeywords,
-    countWordsInLast,
   });
 
-  const secondPatterns = checkFileToAdvanceAnalyzer({
+  const secondPatternsPromise = checkFileToAdvanceAnalyzer({
     file: file.replace("\\", "/"),
     fileContent,
     advancedTags,
   });
+
+  const [firstPatterns, secondPatterns] = await Promise.all([
+    firstPatternsPromise,
+    secondPatternsPromise,
+  ]);
 
   return mergePatterns(file, firstPatterns, secondPatterns);
 };

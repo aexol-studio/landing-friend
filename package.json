@@ -3,31 +3,30 @@
   "version": "0.0.1",
   "description": "",
   "scripts": {
-    "build": "npm run build --ws --if-present"
+    "build": "npm run build --ws --if-present",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --fix"
   },
   "keywords": [],
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^18.11.2",
-    "@types/ws": "^8.5.3",
-    "@typescript-eslint/eslint-plugin": "^5.40.0",
-    "@typescript-eslint/parser": "^5.40.0",
-    "eslint": "^8.25.0",
-    "eslint-config-prettier": "^8.5.0",
-    "eslint-plugin-prettier": "^4.2.1",
-    "jest": "^29.1.2",
-    "prettier": "^2.7.1",
-    "ts-node": "^10.9.1",
-    "ttypescript": "^1.5.13",
+    "@types/node": "18.11.2",
+    "@types/ws": "8.5.3",
+    "@types/yargs": "^17.0.30",
+    "@typescript-eslint/eslint-plugin": "6.10.0",
+    "eslint": "8.53.0",
+    "eslint-plugin-unused-imports": "3.0.0",
+    "prettier": "2.7.1",
+    "ts-node": "10.9.1",
+    "ttypescript": "1.5.13",
     "typescript": "4.8.4",
-    "typescript-transform-paths": "^3.3.1"
+    "typescript-transform-paths": "3.3.1"
   },
   "workspaces": [
     "./packages/landing-friend-core",
     "./packages/landing-friend"
   ],
   "dependencies": {
-    "iso-639-1": "^2.1.15"
+    "iso-639-1": "2.1.15"
   }
 }

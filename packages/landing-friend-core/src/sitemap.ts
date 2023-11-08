@@ -28,8 +28,8 @@ export const sitemapGenerator = (config: ConfigFile) => {
     const allHtmlFiles = getHtmlFiles(input, true);
     const allLocales = ISO.getAllCodes();
 
-    const isThereAnyLocale = allLocales.some((locale) =>
-      allHtmlFiles.some((file) => {
+    const isThereAnyLocale = allLocales.some(locale =>
+      allHtmlFiles.some(file => {
         const regexPattern = new RegExp(`^/${locale}/`);
         return file.match(regexPattern);
       })
@@ -38,19 +38,15 @@ export const sitemapGenerator = (config: ConfigFile) => {
     messageWithContent("Detected locales: ", `${isThereAnyLocale}`, "yellow");
 
     const preparedFiles: File[] = allHtmlFiles
-      .map((file) => {
+      .map(file => {
         const fileWithoutIndex = file.replace(/index/g, "").replace(/\/$/g, "");
         const fileNameWithSlash = file.includes("index") ? file : file + "/";
 
-        const rest = sitemap?.trailingSlash
-          ? fileWithoutIndex + "/"
-          : fileWithoutIndex;
+        const rest = sitemap?.trailingSlash ? fileWithoutIndex + "/" : fileWithoutIndex;
 
         const priority = Math.max(
           0.1,
-          1 -
-            (fileNameWithSlash.replace(/^\//g, "").match(/\//g) || []).length *
-              0.1
+          1 - (fileNameWithSlash.replace(/^\//g, "").match(/\//g) || []).length * 0.1
         );
 
         if (!matchedSetting(fileWithoutIndex, excludedPage)) {
@@ -74,11 +70,7 @@ export const sitemapGenerator = (config: ConfigFile) => {
     });
 
     let sitemapXML: string;
-    if (
-      sitemap?.locale?.localeWildcard &&
-      sitemap?.locale?.defaultLocale &&
-      isThereAnyLocale
-    ) {
+    if (sitemap?.locale?.localeWildcard && sitemap?.locale?.defaultLocale && isThereAnyLocale) {
       sitemapXML = localesSitemapGenerator({
         ...sitemap.locale,
         files,
@@ -87,15 +79,15 @@ export const sitemapGenerator = (config: ConfigFile) => {
       sitemapXML = classicSitemapGenerator({ files });
     }
 
-    saveOldSitemap(`${output}/sitemap.xml`, `./SEO`);
+    saveOldSitemap(`${output}/sitemap.xml`, "./SEO");
     saveSitemap(`${output}/sitemap.xml`, sitemapXML);
   };
 
   const generateRobots = () => {
     const excludedPages = excludedPage
-      .map((path) => {
+      .map(path => {
         if (!path.startsWith("/") && !path.startsWith("*/")) {
-          path = "/" + path.replace(new RegExp(`^\.\/`, "g"), "");
+          path = "/" + path.replace(new RegExp("^./", "g"), "");
         }
         return `Disallow: ${path}`;
       })
@@ -129,29 +121,28 @@ const localesSitemapGenerator = ({
 }) => {
   const allLocales = ISO.getAllCodes();
 
-  let locales: string[] = [];
-  allLocales.forEach((locale) => {
+  const locales: string[] = [];
+  allLocales.forEach(locale => {
     const replaced = localeWildcard.replace("$locale", locale);
-    files.forEach((file) => {
+    files.forEach(file => {
       const url = new URL(file.link);
       const findLocales = url.pathname.match(replaced);
       if (findLocales && !locales.includes(locale)) locales.push(locale);
     });
   });
 
-  if (!locales.includes(defaultLocale))
-    locales.push(defaultLocale.toLowerCase());
+  if (!locales.includes(defaultLocale)) locales.push(defaultLocale.toLowerCase());
 
-  const pagesWithLocales = files.filter((file) => {
-    return locales.some((locale) => file.link.includes(`/${locale}/`));
+  const pagesWithLocales = files.filter(file => {
+    return locales.some(locale => file.link.includes(`/${locale}/`));
   });
 
   const classicSitemapFiles = files.filter(
-    (file) => !locales.some((locale) => file.link.includes(`/${locale}/`))
+    file => !locales.some(locale => file.link.includes(`/${locale}/`))
   );
 
   const preparedFiles = pagesWithLocales
-    .map((page) => {
+    .map(page => {
       const url = new URL(page.link);
       const locale = url.pathname.split("/")[1];
       const link = page.link.replace(`/${locale}/`, "/__locale__/");
@@ -160,17 +151,14 @@ const localesSitemapGenerator = ({
         priority: page.priority,
       };
     })
-    .filter(
-      (file, index, self) =>
-        index === self.findIndex((t) => t.link === file.link)
-    );
+    .filter((file, index, self) => index === self.findIndex(t => t.link === file.link));
 
   const newFiles = preparedFiles.reduce((acc, file) => {
     const split = file.link.split("/__locale__/");
     if (split.length === 2) {
       const link = file.link;
       const priority = file.priority;
-      acc[link] = locales.map((locale) => {
+      acc[link] = locales.map(locale => {
         const newLink = link.replace("/__locale__/", `/${locale}/`);
         return {
           link: newLink,
@@ -183,9 +171,9 @@ const localesSitemapGenerator = ({
   }, {} as Record<string, (File & { locale: string })[]>);
 
   const localeSitemapFiles = Object.keys(newFiles)
-    .map((key) => {
+    .map(key => {
       if (!key.includes("__locale__")) return null;
-      const links = newFiles[key].map((file) => ({
+      const links = newFiles[key].map(file => ({
         link: file.link,
         locale: file.locale,
       }));
@@ -213,9 +201,7 @@ const localesSitemapGenerator = ({
 const classicSitemapGenerator = ({ files }: { files: File[] }) => {
   return `
 <?xml version="1.0" encoding="UTF-8"?>
-  <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${classicSeoFragmentGenerator(
-    files
-  )}
+  <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${classicSeoFragmentGenerator(files)}
   </urlset>
 `.trim();
 };
@@ -225,15 +211,11 @@ const localeSeoGenerator = (
   localeSitemapFiles: Array<Record<string, LocaleFile>>,
   defaultLocale: string
 ) => {
-  const classicWithoutLocales: File[] = classicSitemapFiles.filter(
-    (classic) => {
-      return !localeSitemapFiles.some(
-        (locale) => classic.link === Object.keys(locale)[0]
-      );
-    }
-  );
+  const classicWithoutLocales: File[] = classicSitemapFiles.filter(classic => {
+    return !localeSitemapFiles.some(locale => classic.link === Object.keys(locale)[0]);
+  });
 
-  const data = localeSitemapFiles.map((page) => {
+  const data = localeSitemapFiles.map(page => {
     const key = Object.keys(page)[0];
     const links = page[key].links;
     const priority = page[key].priority;
@@ -254,15 +236,13 @@ const localeSeoGenerator = (
       <priority>${(priority + 0.1).toFixed(1)}</priority>
     </url>`;
   });
-  return data
-    .join("")
-    .concat(classicSeoFragmentGenerator(classicWithoutLocales));
+  return data.join("").concat(classicSeoFragmentGenerator(classicWithoutLocales));
 };
 
 const classicSeoFragmentGenerator = (preparedFiles: File[]) => {
   return preparedFiles
     .map(
-      (page) => `
+      page => `
     <url>
       <loc>${page.link}</loc>
       <lastmod>${new Date().toISOString()}</lastmod>

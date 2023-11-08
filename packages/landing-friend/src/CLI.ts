@@ -2,12 +2,7 @@
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 
-import {
-  message,
-  readConfig,
-  sitemapGenerator,
-  websiteAnalyzer,
-} from "@landing-friend/core";
+import { message, readConfig, sitemapGenerator, websiteAnalyzer } from "@landing-friend/core";
 
 import { configInit } from "./index.js";
 
@@ -16,7 +11,7 @@ process.on("SIGINT", () => {
   process.exit();
 });
 
-const WelcomeMessage = `Landing Friend, Your SEO in one place.`;
+const WelcomeMessage = "Landing Friend, Your SEO in one place.";
 
 yargs(hideBin(process.argv))
   .usage(WelcomeMessage)
@@ -26,7 +21,8 @@ yargs(hideBin(process.argv))
     "Generate config file",
     {
       help: {
-        describe: `It generates a configuration file containing basic or extended configuration depending on the selected options.`,
+        describe:
+          "It generates a configuration file containing basic or extended configuration depending on the selected options.",
       },
     },
     async () => await configInit()
@@ -36,11 +32,11 @@ yargs(hideBin(process.argv))
     "Generate sitemap for your landing page",
     {
       help: {
-        describe: `Generate sitemap/robots files for your page`,
+        describe: "Generate sitemap/robots files for your page",
       },
     },
     async () => {
-      const config = await readConfig("landing-friend-config.ts");
+      const config = readConfig("landing-friend-config.ts");
       if (!config) {
         message("Config not found", "red");
         return;
@@ -49,11 +45,12 @@ yargs(hideBin(process.argv))
         message("Generating sitemap...", "yellow");
         sitemapGenerator(config).generateAll();
         message("Sitemap generated", "green");
-      } catch (e: any) {
-        message(e.message, "red");
-        if (e.message === "There are locales in your project.") {
+      } catch (e) {
+        const error = e as Error;
+        message(error.message, "red");
+        if (error.message === "There are locales in your project.") {
+          return;
         }
-        return;
       }
     }
   )
@@ -62,26 +59,29 @@ yargs(hideBin(process.argv))
     "Analyze your landing page",
     {
       help: {
-        describe: `Analysis of your website through defined values in the config generates HTML and JSON files.`,
+        describe:
+          "Analysis of your website through defined values in the config generates HTML and JSON files.",
       },
     },
     async () => {
-      const config = await readConfig("landing-friend-config.ts");
+      const config = readConfig("landing-friend-config.ts");
       if (!config) {
         message("Config not found", "red");
         return;
       }
       try {
         message("Analyzing your page...", "yellow");
-        websiteAnalyzer(config).analyze();
-      } catch (e: any) {
-        message(e.message, "red");
+        await websiteAnalyzer(config);
+      } catch (e) {
+        const error = e as Error;
+        message(error.message, "red");
         return;
+      } finally {
+        process.exit();
       }
     }
   )
   .help()
-  .version("0.0.1")
   .showHelpOnFail(true)
   .strict()
   .strictCommands()

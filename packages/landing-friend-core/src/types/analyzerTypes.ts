@@ -1,8 +1,24 @@
-export type AdvancedTagsName = "og" | "twitter";
+export enum advancedTagsName {
+  og = "og",
+  twitter = "twitter",
+}
 
-export type TagsName = "h1" | "title" | "description";
+export type AdvancedTagsName = keyof typeof advancedTagsName;
 
-export type AdditionalTagsName = "lastSentence" | "keywords";
+export enum tagsName {
+  h1 = "h1",
+  title = "title",
+  description = "description",
+}
+
+export type TagsName = keyof typeof tagsName;
+
+export enum additionalTagsName {
+  lastSentence = "lastSentence",
+  keywords = "keywords",
+}
+
+export type AdditionalTagsName = keyof typeof additionalTagsName;
 
 export type BasicTagsName = TagsName | AdditionalTagsName;
 
@@ -45,16 +61,11 @@ export interface AdvancedTagsWithReason {
   listOfFoundMeta?: MetaNameWithProps;
 }
 
-export interface CombineTagsWithReason
-  extends TagsWithReason,
-    AdvancedTagsWithReason {}
+export interface CombineTagsWithReason extends TagsWithReason, AdvancedTagsWithReason {}
 
 export type TagsPatterns = Record<string, Record<AllTagsName, TagsWithReason>>;
 
-export type AdvancedTagsPatterns = Record<
-  string,
-  Record<AdvancedTagsName, AdvancedTagsWithReason>
->;
+export type AdvancedTagsPatterns = Record<string, Record<AdvancedTagsName, AdvancedTagsWithReason>>;
 
 export type CombinedPatterns = {
   [key: string]:

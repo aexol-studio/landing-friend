@@ -6,14 +6,12 @@ export const getHtmlFiles = (base: string, deleteFileExtension: boolean) => {
   const baseWithoutDot = base.replace(/\.\//g, "");
 
   return getDirectories(base)
-    .map((file) => {
+    .map(file => {
       const relativePath = file.replace(baseWithoutDot, "");
       return relativePath.replace(/\\/g, "/");
     })
-    .filter((file) => file.endsWith(".html") || file.endsWith(".php"))
-    .map((file) =>
-      deleteFileExtension ? file.replace(/\.html|\.php/g, "") : file
-    );
+    .filter(file => file.endsWith(".html") || file.endsWith(".php"))
+    .map(file => (deleteFileExtension ? file.replace(/\.html|\.php/g, "") : file));
 };
 
 export const getDirectories = (dir: string, fileList = [] as string[]) => {
@@ -67,12 +65,12 @@ export const matchedSetting = (file: string, paths: string[]) => {
   file = file.endsWith("/") ? file : file + "/";
   if (paths.length > 0) {
     if (
-      paths.find((path) => {
+      paths.find(path => {
         const regexPattern = path
           .replace(/\/$/g, "/$")
-          .replace(/^\.\//g, `^\/`)
-          .replace("*/", `\/`)
-          .replace("/*", `\/`);
+          .replace(/^\.\//g, "^/")
+          .replace("*/", "/")
+          .replace("/*", "/");
         return file.match(new RegExp(regexPattern, "g")) !== null;
       })
     ) {

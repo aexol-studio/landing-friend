@@ -86,7 +86,7 @@ export const configInit = async () => {
       {
         type: "confirm",
         name: "sitemap.trailingSlash",
-        message: `Whether to add "/" at the end of the url ?`,
+        message: "Whether to add \"/\" at the end of the url ?",
         default: EXTENDED_SITEMAP_GLOBAL_CONFIG_FILE.sitemap?.trailingSlash,
       },
     ]);

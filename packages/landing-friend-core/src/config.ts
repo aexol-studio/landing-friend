@@ -10,21 +10,17 @@ export const GLOBAL_CONFIG_FILE: ConfigFile = {
   robots: true,
   excludedPage: ["*/404/"],
 };
-export const EXTENDED_SITEMAP_GLOBAL_CONFIG_FILE: Pick<ConfigFile, "sitemap"> =
-  {
-    sitemap: {
-      locale: {
-        defaultLocale: "en",
-        localeWildcard: "/$locale/",
-      },
-      sortBy: "priority",
-      trailingSlash: true,
+export const EXTENDED_SITEMAP_GLOBAL_CONFIG_FILE: Pick<ConfigFile, "sitemap"> = {
+  sitemap: {
+    locale: {
+      defaultLocale: "en",
+      localeWildcard: "/$locale/",
     },
-  };
-export const EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE: Pick<
-  ConfigFile,
-  "analyzer"
-> = {
+    sortBy: "priority",
+    trailingSlash: true,
+  },
+};
+export const EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE: Pick<ConfigFile, "analyzer"> = {
   analyzer: {
     h1: {
       minLength: 10,
@@ -42,10 +38,7 @@ export const EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE: Pick<
     keywords: { count: true },
   },
 };
-export const EXTENDED_ADVANCED_ANALYZER_GLOBAL_CONFIG_FILE: Pick<
-  ConfigFile,
-  "advancedAnalyzer"
-> = {
+export const EXTENDED_ADVANCED_ANALYZER_GLOBAL_CONFIG_FILE: Pick<ConfigFile, "advancedAnalyzer"> = {
   advancedAnalyzer: {
     og: true,
     twitter: true,
@@ -64,23 +57,19 @@ export const readConfig = (filePath: string): ConfigFile | undefined => {
   try {
     const configFileText = fs
       .readFileSync(filePath, "utf8")
-      .replace(/\'/g, `"`)
-      .replace(`import { ConfigFile } from "@landing-friend/core";`, "")
+      .replace(/'/g, '"')
+      .replace('import { ConfigFile } from "@landing-friend/core";', "")
       .replace("export const GLOBAL_CONFIG_FILE: ConfigFile = ", "")
       .replace(";", "")
-
       .trim();
 
-    const config = ts.parseConfigFileTextToJson(filePath, configFileText)
-      .config as ConfigFile;
+    const config = ts.parseConfigFileTextToJson(filePath, configFileText).config as ConfigFile;
 
     const errors: string[] = [];
-    Object.keys(GLOBAL_CONFIG_FILE).forEach((key) => {
+    Object.keys(GLOBAL_CONFIG_FILE).forEach(key => {
       const v = config[key as keyof ConfigFile];
       if (typeof v === "undefined" || v === null) {
-        errors.push(
-          `Invalid config file. Please include "${key}" in your config`
-        );
+        errors.push(`Invalid config file. Please include "${key}" in your config`);
       }
     });
 
@@ -100,17 +89,11 @@ export const readConfig = (filePath: string): ConfigFile | undefined => {
 export const checkConfigDirectories = async (config: ConfigFile) => {
   if (!fs.existsSync(config.input)) {
     fs.mkdirSync(config.input, { recursive: true });
-    message(
-      "In directory was not present. It was created automatically",
-      "yellow"
-    );
+    message("In directory was not present. It was created automatically", "yellow");
   }
   if (!fs.existsSync(config.output)) {
     fs.mkdirSync(config.output, { recursive: true });
-    message(
-      "Out directory was not present. It was created automatically",
-      "yellow"
-    );
+    message("Out directory was not present. It was created automatically", "yellow");
   }
 };
 
