@@ -17,6 +17,7 @@ landing/out
 .next/
 .env
 out
+out_test
 landing-friend-config.ts
 public
 SEO

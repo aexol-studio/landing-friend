@@ -17,7 +17,10 @@ interface DefaultGenerate {
   advancedAnalyzer: boolean;
 }
 
-type GenerateTable = DefaultGenerate & { combinedTagsPatterns: CombinedPatterns };
+type GenerateTable = DefaultGenerate & {
+  combinedTagsPatterns: CombinedPatterns;
+  tableIndex: number;
+};
 type PrepareHtml = DefaultGenerate & { combinedTagsPatterns: CombinedPatterns[] };
 
 const generateTableRows = ({
@@ -25,6 +28,7 @@ const generateTableRows = ({
   countKeywords,
   countWordsInLast,
   advancedAnalyzer,
+  tableIndex,
 }: GenerateTable): string => {
   return Object.entries(combinedTagsPatterns)
     .map(([file, tagData]) => {
@@ -73,10 +77,13 @@ const generateTableRows = ({
 
       return `<thead>
           <tr>
-          <th colspan="2">${file}</th>
+          <th colspan="2"> 
+          <span>${file}</span>
+          <span class="toggle-button" id="toggle-button-${tableIndex}">▼</span>
+          </th>
           </tr>
           </thead>
-          <tbody>
+          <tbody id="toggle-body-${tableIndex}" class="hidden">
           ${mainRow}
           ${
             countKeywords
@@ -94,8 +101,25 @@ const generateTableRows = ({
           ${metaRow}`
             : ""
         }
-          </tbody>
-         <tr class="empty-row"/>
+        </tbody>
+        <tr class="empty-row"/>
+         <script>
+                document.addEventListener("DOMContentLoaded", () => {
+                  const toggleButton = document.getElementById("toggle-button-${tableIndex}");
+                  const toggleBody = document.getElementById("toggle-body-${tableIndex}");
+                  toggleButton &&
+                    toggleBody &&
+                    toggleButton.addEventListener("click", () => {
+                      if (toggleBody.classList.contains("hidden")) {
+                        toggleBody.classList.remove("hidden");
+                        toggleButton.textContent = "▲";
+                      } else {
+                        toggleBody.classList.add("hidden");
+                        toggleButton.textContent = "▼";
+                      }
+                    });
+                })
+   </script>
           `;
     })
     .join("");
@@ -108,7 +132,7 @@ export const prepareHTMLWithTables = ({
   advancedAnalyzer,
 }: PrepareHtml): string => {
   let brokenTagsTable: string = "";
-  combinedTagsPatterns.map(combinedTagsPattern => {
+  combinedTagsPatterns.map((combinedTagsPattern, idx) => {
     brokenTagsTable =
       brokenTagsTable +
       generateTableRows({
@@ -116,6 +140,7 @@ export const prepareHTMLWithTables = ({
         countKeywords,
         countWordsInLast,
         advancedAnalyzer,
+        tableIndex: idx,
       });
   });
 
@@ -126,6 +151,12 @@ export const prepareHTMLWithTables = ({
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <style>
+          .toggle-button {
+            cursor: pointer;
+          }
+          .hidden {
+            display: none;
+          }
           body {
             font-family: Arial, sans-serif;
             margin: 20px;
@@ -148,6 +179,7 @@ export const prepareHTMLWithTables = ({
             border: 1px solid black;
             padding: 8px;
             text-align: left;
+            justify-content: space-between;
           }
           th {
             background-color: #f2f2f2;
@@ -209,6 +241,7 @@ export const prepareHTMLWithTables = ({
         <table>
           ${brokenTagsTable}
         </table>
+      
       </body>
     </html>`;
 };

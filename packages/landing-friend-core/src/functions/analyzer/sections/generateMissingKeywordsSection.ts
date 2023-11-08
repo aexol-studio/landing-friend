@@ -44,26 +44,30 @@ export const generateMissingKeywordsSection = ({
     return "";
   };
 
-  if (
-    missingTitleKeywords.length > 0 ||
-    missingDescriptionKeywords.length > 0 ||
-    missingLastSentenceKeywords.length > 0
-  ) {
-    sections += missingKeywordsHeader;
-    sections += generateMissingKeywordsSection("Title", missingTitleKeywords);
-    sections += generateMissingKeywordsSection("Description", missingDescriptionKeywords);
-    sections += generateMissingKeywordsSection("Last Sentence", missingLastSentenceKeywords);
-  }
+  if (h1Keywords && h1Keywords.length > 0) {
+    if (
+      missingTitleKeywords.length > 0 ||
+      missingDescriptionKeywords.length > 0 ||
+      missingLastSentenceKeywords.length > 0
+    ) {
+      sections += missingKeywordsHeader;
+      sections += generateMissingKeywordsSection("Title", missingTitleKeywords);
+      sections += generateMissingKeywordsSection("Description", missingDescriptionKeywords);
+      sections += generateMissingKeywordsSection("Last Sentence", missingLastSentenceKeywords);
+    }
 
-  if (
-    toMuchTitleKeywords.length > 0 ||
-    toMuchDescriptionKeywords.length > 0 ||
-    toMuchLastSentenceKeywords.length > 0
-  ) {
-    sections += tooMuchKeywordsHeader;
-    sections += generateTooMuchKeywordsSection("Title", toMuchTitleKeywords);
-    sections += generateTooMuchKeywordsSection("Description", toMuchDescriptionKeywords);
-    sections += generateTooMuchKeywordsSection("Last Sentence", toMuchLastSentenceKeywords);
+    if (
+      toMuchTitleKeywords.length > 0 ||
+      toMuchDescriptionKeywords.length > 0 ||
+      toMuchLastSentenceKeywords.length > 0
+    ) {
+      sections += tooMuchKeywordsHeader;
+      sections += generateTooMuchKeywordsSection("Title", toMuchTitleKeywords);
+      sections += generateTooMuchKeywordsSection("Description", toMuchDescriptionKeywords);
+      sections += generateTooMuchKeywordsSection("Last Sentence", toMuchLastSentenceKeywords);
+    }
+  } else {
+    sections = `<tr><td colspan="2"><strong style="color:red">Your h1 doesn't contain any keywords.</strong></td></tr>`;
   }
 
   return sections;

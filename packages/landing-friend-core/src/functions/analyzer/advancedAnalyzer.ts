@@ -85,8 +85,12 @@ export const checkFileToAdvanceAnalyzer = async ({
             char => content && content.includes(char)
           );
           if (content && content.includes("https")) {
-            const response = await fetch(content);
-            status = response.statusText;
+            try {
+              const response = await fetch(content);
+              status = response.statusText;
+            } catch (err) {
+              //
+            }
           }
 
           const metaObject: MetaNameWithProps = {

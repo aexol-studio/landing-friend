@@ -37,7 +37,10 @@ const checkContent = (tagName: BasicTagsName, fileContent: string) => {
         if (captureGroups) {
           let content = captureGroups[1];
           staticTags.forEach(staticTag => {
-            const staticTagRegex = new RegExp(`<${staticTag}.*?>|</${staticTag}>`, "g");
+            const staticTagRegex = new RegExp(
+              `<${staticTag}.*?>|</${staticTag}>|\\.css.*?}|@media.*?}|{|}`,
+              "g"
+            );
             Object.entries(unicode).forEach(([unicode, replacement]) => {
               const unicodeRegex = new RegExp(`${unicode}`, "g");
               content = content.replace(unicodeRegex, replacement);
