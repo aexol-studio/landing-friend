@@ -66,15 +66,13 @@ export const configInit = async () => {
         type: "input",
         name: "sitemap.locale.defaultLocale",
         message: "Default locale of your website:",
-        default:
-          EXTENDED_SITEMAP_GLOBAL_CONFIG_FILE.sitemap?.locale?.defaultLocale,
+        default: EXTENDED_SITEMAP_GLOBAL_CONFIG_FILE.sitemap?.locale?.defaultLocale,
       },
       {
         type: "input",
         name: "sitemap.locale.localeWildcard",
         message: "The position of the locale in the path:",
-        default:
-          EXTENDED_SITEMAP_GLOBAL_CONFIG_FILE.sitemap?.locale?.localeWildcard,
+        default: EXTENDED_SITEMAP_GLOBAL_CONFIG_FILE.sitemap?.locale?.localeWildcard,
       },
       {
         type: "list",
@@ -86,15 +84,14 @@ export const configInit = async () => {
       {
         type: "confirm",
         name: "sitemap.trailingSlash",
-        message: "Whether to add \"/\" at the end of the url ?",
+        message: 'Whether to add "/" at the end of the url ?',
         default: EXTENDED_SITEMAP_GLOBAL_CONFIG_FILE.sitemap?.trailingSlash,
       },
     ]);
   }
   let extendResponseByAnalyzer: Pick<ConfigFile, "analyzer"> = {};
 
-  let extendResponseByAdvanceAnalyzer: Pick<ConfigFile, "advancedAnalyzer"> =
-    {};
+  let extendResponseByAdvanceAnalyzer: Pick<ConfigFile, "advancedAnalyzer"> = {};
   const { extendConfigByAnalyzer } = await inquirer.prompt<{
     extendConfigByAnalyzer: boolean;
   }>({
@@ -171,6 +168,15 @@ export const configInit = async () => {
       },
       {
         type: "confirm",
+        name: "analyzer.canonical.count",
+        message: "Do you want to check your canonical links?",
+        default:
+          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer instanceof Object &&
+          "keywords" in EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer &&
+          EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE.analyzer.canonical.count,
+      },
+      {
+        type: "confirm",
         name: "analyzer.lastSentence.count",
         message: "Do you want to check for matching keywords in last the div?",
         default:
@@ -194,16 +200,13 @@ export const configInit = async () => {
           type: "confirm",
           name: "advancedAnalyzer.og",
           message: "Do you want to check all og protocols?",
-          default:
-            EXTENDED_ADVANCED_ANALYZER_GLOBAL_CONFIG_FILE.advancedAnalyzer?.og,
+          default: EXTENDED_ADVANCED_ANALYZER_GLOBAL_CONFIG_FILE.advancedAnalyzer?.og,
         },
         {
           type: "confirm",
           name: "advancedAnalyzer.twitter",
           message: "Do you want to check all twitter metadata?",
-          default:
-            EXTENDED_ADVANCED_ANALYZER_GLOBAL_CONFIG_FILE.advancedAnalyzer
-              ?.twitter,
+          default: EXTENDED_ADVANCED_ANALYZER_GLOBAL_CONFIG_FILE.advancedAnalyzer?.twitter,
         },
       ]);
     }

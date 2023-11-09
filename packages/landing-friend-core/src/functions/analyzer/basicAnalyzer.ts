@@ -16,6 +16,8 @@ const checkContent = (tagName: BasicTagsName, fileContent: string) => {
     regex = new RegExp(`<meta name="description" content="(.*?)"`, "g");
   } else if (tagName === "keywords") {
     regex = new RegExp(`<meta property="keywords" content="(.*?)"`, "g");
+  } else if (tagName === "canonical") {
+    regex = new RegExp(`<link rel="canonical" href="(.*?)"`, "g");
   } else if (tagName === "lastSentence") {
     regex = new RegExp(`<div.*?>(.*?)</div>`, "g");
   } else {
@@ -97,7 +99,7 @@ export const checkFileToBasicAnalyzer = ({
           ...tagsPatterns[file],
           [tag]: {
             ...value,
-            requirement: `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
+            requirement: "Check the code",
             quantity: matches.length,
             multipleTags: true,
           },
@@ -112,13 +114,15 @@ export const checkFileToBasicAnalyzer = ({
             ...tagsPatterns[file],
             [tag]: {
               ...value,
-              maxLength: tag !== "keywords" ? value.maxLength : undefined,
-              minLength: tag !== "keywords" ? value.minLength : undefined,
+              maxLength: value.maxLength,
+              minLength: value.minLength,
               requirement:
                 tag === "keywords"
                   ? undefined
                   : tag === "lastSentence"
                   ? "Tag should contain the same keywords as upper tags"
+                  : tag === "canonical"
+                  ? "The canonical link must be the same as the URL."
                   : `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
               quantity: text.length,
               content: text,
@@ -144,8 +148,10 @@ export const checkFileToBasicAnalyzer = ({
               ? "At least one keyword required"
               : tag === "lastSentence"
               ? "Tag should contain the same keywords as upper tags"
+              : tag === "canonical"
+              ? "The canonical link must be the same as the URL."
               : `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
-          quantity: NaN,
+          quantity: 0,
         },
       };
     }

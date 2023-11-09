@@ -15,7 +15,7 @@ import {
 } from "./index.js";
 
 export const websiteAnalyzer = async (config: ConfigFile) => {
-  const { input, analyzer, advancedAnalyzer, excludedPage } = config;
+  const { input, analyzer, advancedAnalyzer, excludedPage, sitemap, domain } = config;
   if (!analyzer) {
     return message("Define analyzer in config", "redBright");
   }
@@ -50,6 +50,8 @@ export const websiteAnalyzer = async (config: ConfigFile) => {
     countKeywords: analyzer.keywords.count,
     countWordsInLast: analyzer.lastSentence.count,
     advancedAnalyzer: !!advancedAnalyzer,
+    trailingSlash: sitemap?.trailingSlash,
+    domain,
   });
 
   const cleanedTagsPatterns: CombinedPatterns = {};

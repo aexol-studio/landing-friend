@@ -16,6 +16,7 @@ export type TagsName = keyof typeof tagsName;
 export enum additionalTagsName {
   lastSentence = "lastSentence",
   keywords = "keywords",
+  canonical = "canonical",
 }
 
 export type AdditionalTagsName = keyof typeof additionalTagsName;

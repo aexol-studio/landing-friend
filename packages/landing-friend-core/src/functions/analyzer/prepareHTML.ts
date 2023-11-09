@@ -15,6 +15,8 @@ interface DefaultGenerate {
   countKeywords: boolean;
   countWordsInLast: boolean;
   advancedAnalyzer: boolean;
+  trailingSlash?: boolean;
+  domain: string;
 }
 
 type GenerateTable = DefaultGenerate & {
@@ -29,6 +31,8 @@ const generateTableRows = ({
   countWordsInLast,
   advancedAnalyzer,
   tableIndex,
+  trailingSlash,
+  domain,
 }: GenerateTable): string => {
   return Object.entries(combinedTagsPatterns)
     .map(([file, tagData]) => {
@@ -58,6 +62,9 @@ const generateTableRows = ({
               h1Keywords,
               tag: tag as BasicTagsName,
               value,
+              trailingSlash,
+              pathname: file,
+              domain,
             })}</tr>`;
           }
         })
@@ -130,6 +137,8 @@ export const prepareHTMLWithTables = ({
   countKeywords,
   countWordsInLast,
   advancedAnalyzer,
+  trailingSlash,
+  domain,
 }: PrepareHtml): string => {
   let brokenTagsTable: string = "";
   combinedTagsPatterns.map((combinedTagsPattern, idx) => {
@@ -141,6 +150,8 @@ export const prepareHTMLWithTables = ({
         countWordsInLast,
         advancedAnalyzer,
         tableIndex: idx,
+        trailingSlash,
+        domain,
       });
   });
 

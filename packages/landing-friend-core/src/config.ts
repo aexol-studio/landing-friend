@@ -36,6 +36,7 @@ export const EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE: Pick<ConfigFile, "analyzer"> 
     },
     lastSentence: { count: true },
     keywords: { count: true },
+    canonical: { count: true },
   },
 };
 export const EXTENDED_ADVANCED_ANALYZER_GLOBAL_CONFIG_FILE: Pick<ConfigFile, "advancedAnalyzer"> = {
