@@ -4,10 +4,10 @@ import {
   CombineTagsWithReason,
   CombinedPatterns,
   advancedTagsName,
+  generateMainSection,
+  generateMetaTagsSection,
+  generateMissingKeywordsSection,
 } from "../../index.js";
-import { generateMainSection } from "./sections/generateMainSection.js";
-import { generateMetaTagsSection } from "./sections/generateMetaTagsSection.js";
-import { generateMissingKeywordsSection } from "./sections/generateMissingKeywordsSection.js";
 
 type KeywordsTagsProps = Record<string, string[]>;
 

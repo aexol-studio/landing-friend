@@ -220,21 +220,26 @@ const localeSeoGenerator = (
     const links = page[key].links;
     const priority = page[key].priority;
 
-    return `
-    <url>
-      <loc>${key}</loc>${links
-      .map(({ locale, link }) => {
-        const replaced = link.replace(`/${locale}`, "");
-        return defaultLocale === locale
-          ? `
-        <xhtml:link rel="alternate" hreflang="${locale}" href="${replaced}"/>`
-          : `
-        <xhtml:link rel="alternate" hreflang="${locale}" href="${link}"/>`;
+    return links
+      .map(({ locale: mainLocale, link: linkToKey }) => {
+        const replaced = linkToKey.replace(`/${mainLocale}`, "");
+        return `
+      <url>
+      <loc>${defaultLocale === mainLocale ? replaced : linkToKey}</loc>${links
+          .map(({ locale, link }) => {
+            const replaced = link.replace(`/${locale}`, "");
+            return defaultLocale === locale
+              ? `
+          <xhtml:link rel="alternate" hreflang="${locale}" href="${replaced}"/>`
+              : `
+          <xhtml:link rel="alternate" hreflang="${locale}" href="${link}"/>`;
+          })
+          .join("")}
+        <lastmod>${new Date().toISOString()}</lastmod>
+        <priority>${(priority + 0.1).toFixed(1)}</priority>
+        </url>`;
       })
-      .join("")}
-      <lastmod>${new Date().toISOString()}</lastmod>
-      <priority>${(priority + 0.1).toFixed(1)}</priority>
-    </url>`;
+      .join("");
   });
   return data.join("").concat(classicSeoFragmentGenerator(classicWithoutLocales));
 };
