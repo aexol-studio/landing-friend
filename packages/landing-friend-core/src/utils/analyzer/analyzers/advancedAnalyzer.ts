@@ -3,16 +3,17 @@ import {
   staticTags,
   unicode,
   forbiddenCharacters as _forbiddenCharacters,
-  AdvancedTagsName,
+  AdvancedTagsNameType,
   AdvancedTagsPatterns,
   MetaNameWithProps,
-} from "../../index.js";
+  MetaNameTagsProps,
+} from "@/index.js";
 
 interface MatchedArrayProps {
   content: string;
 }
 
-const matchedTags = (advancedTags: AdvancedTagsName, fileContent: string) => {
+const matchedTags = (advancedTags: AdvancedTagsNameType, fileContent: string) => {
   let regex: RegExp | undefined;
   const matchedArray: { [tagName: string]: MatchedArrayProps }[] = [];
 
@@ -59,7 +60,7 @@ export const checkFileToAdvanceAnalyzer = async ({
   let updatedTagsPatterns = { ...advancedTagsPatterns[file] };
   for (const [_tag, value] of Object.entries(advancedTags)) {
     if (!value) continue;
-    const tag = _tag as AdvancedTagsName;
+    const tag = _tag as AdvancedTagsNameType;
     const matches = matchedTags(tag, fileContent);
 
     if (matches) {
@@ -85,12 +86,13 @@ export const checkFileToAdvanceAnalyzer = async ({
             char => content && content.includes(char)
           );
           if (content && content.includes("https")) {
-            try {
-              const response = await fetch(content);
-              status = response.statusText;
-            } catch (err) {
-              //
-            }
+            status = await fetch(content)
+              .then(response => response.statusText)
+              .catch(err => {
+                if (err) {
+                  return "Not Found";
+                }
+              });
           }
 
           const metaObject: MetaNameWithProps = {
@@ -98,7 +100,7 @@ export const checkFileToAdvanceAnalyzer = async ({
               content,
               forbiddenCharacters,
               status: status ? status : undefined,
-            },
+            } as MetaNameTagsProps,
           };
           listOfFoundMeta = { ...listOfFoundMeta, ...metaObject };
         }
@@ -107,7 +109,8 @@ export const checkFileToAdvanceAnalyzer = async ({
           [tag]: {
             tagAmount: matches.length,
             listOfFoundMeta,
-          },
+            isError: Object.values(listOfFoundMeta).some(value => value?.status !== "OK"),
+          } as MetaNameTagsProps,
         };
       }
     } else {
@@ -115,7 +118,8 @@ export const checkFileToAdvanceAnalyzer = async ({
         ...updatedTagsPatterns,
         [tag]: {
           tagAmount: NaN,
-        },
+          isError: true,
+        } as MetaNameTagsProps,
       };
     }
   }

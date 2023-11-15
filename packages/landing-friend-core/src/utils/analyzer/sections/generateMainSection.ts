@@ -1,12 +1,10 @@
-import { BasicTagsName, CombineTagsWithReason, additionalTagsName } from "@/index.js";
-import { arrayFilleter } from "../arrayFillter.js";
+import { BasicTagsName, CombineTagsWithReason, AdditionalTagsName } from "@/index.js";
 
 interface Props {
   tag: BasicTagsName;
   value: CombineTagsWithReason;
   countKeywords: boolean;
   countWordsInLast: boolean;
-  h1Keywords: string[];
   trailingSlash?: boolean;
   pathname: string;
   domain: string;
@@ -17,7 +15,6 @@ export const generateMainSection = ({
   countKeywords,
   value,
   countWordsInLast,
-  h1Keywords,
   trailingSlash,
   pathname: __pathname,
   domain,
@@ -38,12 +35,12 @@ export const generateMainSection = ({
       ? `<strong style="color:${
           value.quantity >= value.minLength && value.quantity <= value.maxLength ? "black" : "red"
         }">${value.quantity}</strong>`
-      : tag in additionalTagsName
+      : tag in AdditionalTagsName
       ? value.quantity > 0
         ? `<strong style="color: ${
             tag !== "canonical" ? "black" : value.content === url ? "black" : "red"
           }">
-        ${value.content}
+        ${typeof value.content === "string" ? value.content : value.content?.join(", ")}
         </strong>
         `
         : "No words detected"
@@ -52,7 +49,9 @@ export const generateMainSection = ({
  ${
    value.quantity > 0 && countKeywords && tag !== "keywords" && tag !== "canonical"
      ? value.keywordsIncluded && value.keywordsIncluded.length > 0
-       ? ` | <strong style="color:green">Keywords included: ${value.keywordsIncluded}</strong>`
+       ? ` | <strong style="color:green">Keywords included: ${value.keywordsIncluded.join(
+           ", "
+         )}</strong>`
        : ' | <strong style="color:red">Does not contain keywords</strong>'
      : ""
  }
@@ -74,9 +73,9 @@ ${
           ? "color: black"
           : "color: red"
       }">${value.requirement}</span>`
-    : (value.keywordsIncluded &&
-        arrayFilleter(value.keywordsIncluded, h1Keywords).length === 0 &&
-        arrayFilleter(h1Keywords, value.keywordsIncluded).length === 0) ||
+    : (value.keywordsIncluded && value.keywordsIncluded.length > 0) ||
+      (value.missingKeywords && value.missingKeywords.length === 0) ||
+      (value.toMuchKeywords && value.toMuchKeywords.length === 0) ||
       value.content === url
     ? ""
     : `<strong style="color:red">${value.requirement}</strong>`

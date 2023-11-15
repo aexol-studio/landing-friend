@@ -8,7 +8,7 @@ import {
   checkFileToAdvanceAnalyzer,
   checkFileToBasicAnalyzer,
   readFile,
-} from "../../index.js";
+} from "@/index.js";
 
 const mergePatterns = (
   file: string,

@@ -1,8 +1,8 @@
-import { AdvancedTagsName, CombineTagsWithReason } from "@/index.js";
+import { AdvancedTagsNameType, CombineTagsWithReason } from "@/index.js";
 
 interface Props {
   value: CombineTagsWithReason;
-  tag: AdvancedTagsName;
+  tag: AdvancedTagsNameType;
 }
 
 export const generateMetaTagsSection = ({ value, tag }: Props) => {

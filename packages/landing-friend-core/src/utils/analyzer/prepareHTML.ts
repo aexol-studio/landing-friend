@@ -1,15 +1,17 @@
 import {
   AllTagsName,
-  BasicTagsName,
   CombineTagsWithReason,
   CombinedPatterns,
-  advancedTagsName,
+  TagsName,
+  AdditionalTagsName,
+  DataToMissingSection,
+  TagsToMissingSection,
+  generateMissingKeywordsSection,
+  AdvancedTagsName,
+  BasicTagsName,
   generateMainSection,
   generateMetaTagsSection,
-  generateMissingKeywordsSection,
-} from "../../index.js";
-
-type KeywordsTagsProps = Record<string, string[]>;
+} from "@/index.js";
 
 interface DefaultGenerate {
   countKeywords: boolean;
@@ -36,51 +38,66 @@ const generateTableRows = ({
 }: GenerateTable): string => {
   return Object.entries(combinedTagsPatterns)
     .map(([file, tagData]) => {
-      const keywordsToTags: KeywordsTagsProps = {};
+      let h1Keywords: string[] | undefined;
+
+      if (TagsName.h1 in tagData) {
+        h1Keywords = tagData.h1.keywordsIncluded;
+      }
+
+      const dataForMissingSection: DataToMissingSection = {
+        description: { missingKeywords: [], toMuchKeywords: [] },
+        h1: { missingKeywords: [], toMuchKeywords: [] },
+        keywords: { missingKeywords: [], toMuchKeywords: [] },
+        title: { missingKeywords: [], toMuchKeywords: [] },
+        lastSentence: { missingKeywords: [], toMuchKeywords: [] },
+      };
+
       Object.entries(tagData).forEach(([_tag, _value]) => {
         const tag = _tag as AllTagsName;
         const value = _value as CombineTagsWithReason;
-        if (tag !== "keywords" && value.keywordsIncluded && countKeywords) {
-          keywordsToTags[tag] = value.keywordsIncluded;
+        const { missingKeywords, toMuchKeywords } = value;
+
+        if (tag in TagsName || (tag in AdditionalTagsName && tag !== "canonical")) {
+          dataForMissingSection[tag as TagsToMissingSection] = {
+            missingKeywords: missingKeywords ? missingKeywords : [],
+            toMuchKeywords: toMuchKeywords ? toMuchKeywords : [],
+          };
         }
       });
 
-      const h1Keywords = keywordsToTags.h1 || [];
-      const titleKeywords = keywordsToTags.title || [];
-      const descriptionKeywords = keywordsToTags.description || [];
-      const lastSentenceKeywords = keywordsToTags.lastSentence || [];
+      const missingSection = generateMissingKeywordsSection({
+        h1Keywords,
+        data: dataForMissingSection,
+      });
 
-      const mainRow = Object.entries(tagData)
-        .map(([_tag, _value]) => {
-          const tag = _tag as AllTagsName;
-          const value = _value as CombineTagsWithReason;
+      const row = (missingSection: string) => {
+        let mainSection: string = "";
+        let metaTagSection: string = "";
+        Object.entries(tagData)
+          .map(([_tag, _value]) => {
+            const tag = _tag as AllTagsName;
+            const value = _value as CombineTagsWithReason;
 
-          if (!(tag in advancedTagsName)) {
-            return `<tr>${generateMainSection({
-              countKeywords,
-              countWordsInLast,
-              h1Keywords,
-              tag: tag as BasicTagsName,
-              value,
-              trailingSlash,
-              pathname: file,
-              domain,
-            })}</tr>`;
-          }
-        })
-        .join("");
-
-      const metaRow = Object.entries(tagData)
-        .map(([_tag, _value]) => {
-          if (!advancedAnalyzer) return;
-          const tag = _tag as AllTagsName;
-          const value = _value as CombineTagsWithReason;
-
-          if (tag in advancedTagsName) {
-            return generateMetaTagsSection({ tag: tag as advancedTagsName, value });
-          }
-        })
-        .join("");
+            if (!(tag in AdvancedTagsName)) {
+              mainSection += `<tr>${generateMainSection({
+                countKeywords,
+                countWordsInLast,
+                tag: tag as BasicTagsName,
+                value,
+                trailingSlash,
+                pathname: file,
+                domain,
+              })}</tr>`;
+            } else {
+              metaTagSection += advancedAnalyzer
+                ? `<tr><td colspan="2" style="height:20px;"></td></tr>
+           ${generateMetaTagsSection({ tag: tag as AdvancedTagsName, value })}`
+                : "";
+            }
+          })
+          .join("");
+        return mainSection + missingSection + metaTagSection;
+      };
 
       return `<thead>
           <tr>
@@ -91,26 +108,10 @@ const generateTableRows = ({
           </tr>
           </thead>
           <tbody id="toggle-body-${tableIndex}" class="hidden">
-          ${mainRow}
-          ${
-            countKeywords
-              ? generateMissingKeywordsSection({
-                  descriptionKeywords,
-                  h1Keywords,
-                  lastSentenceKeywords,
-                  titleKeywords,
-                })
-              : ""
-          }
-        ${
-          advancedAnalyzer
-            ? `<tr><td colspan="2" style="height:20px;"></td></tr>
-          ${metaRow}`
-            : ""
-        }
-        </tbody>
-        <tr class="empty-row"/>
-         <script>
+            ${row(missingSection)}    
+          </tbody>
+          <tr class="empty-row"/>
+            <script>
                 document.addEventListener("DOMContentLoaded", () => {
                   const toggleButton = document.getElementById("toggle-button-${tableIndex}");
                   const toggleBody = document.getElementById("toggle-body-${tableIndex}");
@@ -126,7 +127,7 @@ const generateTableRows = ({
                       }
                     });
                 })
-   </script>
+            </script>
           `;
     })
     .join("");

@@ -11,7 +11,7 @@ import {
   saveAnalyze,
   CombineTagsWithReason,
   getHtmlFiles,
-  advancedTagsName,
+  AdvancedTagsName,
 } from "./index.js";
 
 export const websiteAnalyzer = async (config: ConfigFile) => {
@@ -74,8 +74,11 @@ export const websiteAnalyzer = async (config: ConfigFile) => {
               forbiddenCharacters: value.forbiddenCharacters,
               keywordsIncluded: tag !== "keywords" ? value.keywordsIncluded : undefined,
               multipleTags: value.multipleTags,
-              tagAmount: tag in advancedTagsName ? value.tagAmount : undefined,
+              tagAmount: tag in AdvancedTagsName ? value.tagAmount : undefined,
               listOfFoundMeta: value.listOfFoundMeta,
+              isError: value.isError,
+              missingKeywords: value.missingKeywords,
+              toMuchKeywords: value.toMuchKeywords,
             } as CombineTagsWithReason,
           } as Record<AllTagsName, CombineTagsWithReason>;
         } else {
@@ -89,6 +92,9 @@ export const websiteAnalyzer = async (config: ConfigFile) => {
               keywordsIncluded: tag !== "keywords" ? value.keywordsIncluded : undefined,
               multipleTags: value.multipleTags,
               tagAmount: value.tagAmount,
+              isError: value.isError,
+              missingKeywords: value.missingKeywords,
+              toMuchKeywords: value.toMuchKeywords,
             } as CombineTagsWithReason,
           } as Record<AllTagsName, CombineTagsWithReason>;
         }
