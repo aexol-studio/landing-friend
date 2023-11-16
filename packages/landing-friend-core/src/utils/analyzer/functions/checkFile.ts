@@ -1,13 +1,14 @@
 import path from "path";
+
 import {
   AdvancedTagsPatterns,
   AdvancedTagsProps,
-  CombinedPatterns,
-  TagsPatterns,
-  TagsProps,
   checkFileToAdvanceAnalyzer,
   checkFileToBasicAnalyzer,
+  CombinedPatterns,
   readFile,
+  TagsPatterns,
+  TagsProps,
 } from "@/index.js";
 
 const mergePatterns = (
@@ -42,11 +43,17 @@ export const checkFiles = async ({
   input,
   tags,
   advancedTags,
+  domain,
+  countKeywords,
+  countWordsInLast,
 }: {
   file: string;
   input: string;
   tags: TagsProps;
   advancedTags?: AdvancedTagsProps;
+  domain: string;
+  countKeywords: boolean;
+  countWordsInLast: boolean;
 }): Promise<CombinedPatterns> => {
   const _fileContent = readFile(path.join(process.cwd(), input.replace(/\.\//g, ""), file));
   const fileContent = _fileContent.replace(/\r?\n\s*/g, " ");
@@ -55,6 +62,9 @@ export const checkFiles = async ({
     file: file.replace("\\", "/"),
     fileContent,
     tags,
+    domain,
+    countKeywords,
+    countWordsInLast,
   });
 
   const secondPatternsPromise = checkFileToAdvanceAnalyzer({

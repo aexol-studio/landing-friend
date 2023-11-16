@@ -1,12 +1,12 @@
 import {
-  TagsProps,
-  staticTags,
-  unicode,
-  forbiddenCharacters as _forbiddenCharacters,
-  TagsPatterns,
   BasicTagsName,
-  TagsWithReason,
+  forbiddenCharacters as _forbiddenCharacters,
+  staticTags,
   TagsName,
+  TagsPatterns,
+  TagsProps,
+  TagsWithReason,
+  unicode,
 } from "@/index.js";
 
 const arrayFilter = (firstArray: string[], secondArray: string[]) => {
@@ -65,19 +65,28 @@ const checkContent = (tagName: BasicTagsName, fileContent: string) => {
   return matches;
 };
 
+interface CheckFileToBasicAnalyzer {
+  file: string;
+  fileContent: string;
+  tags: TagsProps;
+  domain: string;
+  countKeywords: boolean;
+  countWordsInLast: boolean;
+}
+
 export const checkFileToBasicAnalyzer = ({
   file,
   fileContent,
   tags,
-}: {
-  file: string;
-  fileContent: string;
-  tags: TagsProps;
-}): TagsPatterns => {
+  domain,
+  countKeywords,
+  countWordsInLast,
+}: CheckFileToBasicAnalyzer): TagsPatterns => {
   const tagsPatterns: TagsPatterns = {};
   let updatedTagsPatterns = { ...tagsPatterns[file] };
-  let keywordsArray: string[] | undefined;
-  let h1Keywords: string[] | undefined;
+  let mainKeywordsArray: string[] = [];
+  let h1Keywords: string[] = [];
+  const url = domain + file.replace("index.html", "");
 
   if (tags.keywords.count) {
     const keywordsMatch = checkContent("keywords", fileContent);
@@ -85,7 +94,7 @@ export const checkFileToBasicAnalyzer = ({
 
     if (keywordsMatch && keywordsMatch.length > 0) {
       const keywords = keywordsMatch[0].split(", ");
-      keywordsArray = keywords;
+      mainKeywordsArray = keywords;
       if (h1Match && h1Match.length > 0) {
         let selectedH1: string = "";
         h1Match.forEach(match => (selectedH1 = match.toLowerCase()));
@@ -98,6 +107,8 @@ export const checkFileToBasicAnalyzer = ({
     const tag = _tag as BasicTagsName;
     const value = _value as TagsWithReason;
 
+    if (!countKeywords && tag === "keywords") return;
+    if (!countWordsInLast && tag === "lastSentence") return;
     const matches = checkContent(tag, fileContent);
 
     if (matches) {
@@ -118,18 +129,23 @@ export const checkFileToBasicAnalyzer = ({
           let missingKeywords: string[] = [];
           let toMuchKeywords: string[] = [];
 
-          const tagKeywords = !tags.keywords.count
-            ? undefined
-            : tag === "keywords"
-            ? keywordsArray
-            : keywordsArray
-            ? keywordsArray.filter(keyword => match.toLowerCase().includes(keyword.toLowerCase()))
-            : undefined;
+          const tagKeywords =
+            tag === "canonical"
+              ? undefined
+              : !tags.keywords.count
+              ? undefined
+              : tag === "keywords"
+              ? mainKeywordsArray
+              : mainKeywordsArray.length > 0
+              ? mainKeywordsArray.filter(keyword =>
+                  match.toLowerCase().includes(keyword.toLowerCase())
+                )
+              : undefined;
 
-          if (h1Keywords && tagKeywords) {
+          if (h1Keywords.length > 0) {
             if (tag in TagsName || tag === "lastSentence") {
-              missingKeywords = arrayFilter(h1Keywords, tagKeywords);
-              toMuchKeywords = arrayFilter(tagKeywords, h1Keywords);
+              missingKeywords = arrayFilter(h1Keywords, tagKeywords ? tagKeywords : []);
+              toMuchKeywords = arrayFilter(tagKeywords ? tagKeywords : [], h1Keywords);
             }
           }
 
@@ -137,10 +153,22 @@ export const checkFileToBasicAnalyzer = ({
             const { minLength, maxLength } = value;
             const isLengthInvalid =
               minLength && maxLength && (match.length < minLength || match.length > maxLength);
+            const isH1Exist =
+              countKeywords && mainKeywordsArray.length > 0
+                ? tag === "h1" && h1Keywords.length === 0
+                : false;
             const areKeywordsMissingOrExcessive =
-              missingKeywords.length > 0 || toMuchKeywords.length > 0 || match.length === 0;
+              countKeywords || isH1Exist || mainKeywordsArray.length === 0
+                ? missingKeywords.length > 0 || toMuchKeywords.length > 0
+                : false;
 
-            return isLengthInvalid || areKeywordsMissingOrExcessive;
+            return (
+              isLengthInvalid ||
+              areKeywordsMissingOrExcessive ||
+              isH1Exist ||
+              (tag === "canonical" && match !== url) ||
+              forbiddenCharacters.length > 0
+            );
           };
 
           return (updatedTagsPatterns = tagsPatterns[file] =

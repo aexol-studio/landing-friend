@@ -1,6 +1,7 @@
 import fs from "fs";
-import { message } from "./console.js";
 import ts from "typescript";
+
+import { message } from "./console.js";
 import { ConfigFile } from "./index.js";
 
 export const GLOBAL_CONFIG_FILE: ConfigFile = {
@@ -46,20 +47,22 @@ export const EXTENDED_ADVANCED_ANALYZER_GLOBAL_CONFIG_FILE: Pick<ConfigFile, "ad
   },
 };
 
-export const readConfig = (filePath: string): ConfigFile | undefined => {
+export const readConfig = (filePath: string, option: "init" | "generate") => {
   if (!fs.existsSync(filePath)) {
-    message(
-      "No config detected. Please create one using init command or create it manually",
-      "red"
-    );
+    if (option === "generate") {
+      message(
+        "No config detected. Please create one using init command or create it manually",
+        "red"
+      );
+    }
     return undefined;
   }
 
   try {
     const configFileText = fs
       .readFileSync(filePath, "utf8")
-      .replace(/'/g, '"')
-      .replace('import { ConfigFile } from "@landing-friend/core";', "")
+      .replace(/`/g, `"`)
+      .replace(`import { ConfigFile } from "@landing-friend/core";`, "")
       .replace("export const GLOBAL_CONFIG_FILE: ConfigFile = ", "")
       .replace(";", "")
       .trim();

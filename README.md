@@ -1,6 +1,6 @@
 # Landing Friend
 
-Landing friend is a simple to use CLI tool which offers immense help for on-page SEO specialists. Run a couple simple commands you'll get:
+Landing friend is a simple to use CLI tool which offers immense help for on-page SEO specialists. Run a couple simple commands you`ll get:
 * sitemap.xml - localized or unlocalized depending on your project settings
 * robots.txt - based on the pages you set up as excluded
 * detailed SEO analysis (meta tags, keyword population, errors & duplicates)

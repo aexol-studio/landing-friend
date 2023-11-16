@@ -1,16 +1,16 @@
 import {
-  AllTagsName,
-  CombineTagsWithReason,
-  CombinedPatterns,
-  TagsName,
   AdditionalTagsName,
-  DataToMissingSection,
-  TagsToMissingSection,
-  generateMissingKeywordsSection,
   AdvancedTagsName,
+  AllTagsName,
   BasicTagsName,
+  CombinedPatterns,
+  CombineTagsWithReason,
+  DataToMissingSection,
   generateMainSection,
   generateMetaTagsSection,
+  generateMissingKeywordsSection,
+  TagsName,
+  TagsToMissingSection,
 } from "@/index.js";
 
 interface DefaultGenerate {
@@ -35,19 +35,23 @@ const generateTableRows = ({
   tableIndex,
   trailingSlash,
   domain,
-}: GenerateTable): string => {
-  return Object.entries(combinedTagsPatterns)
+}: GenerateTable): { numberOfErrors: number; row: string } => {
+  let numberOfErrors = 0;
+  const row = Object.entries(combinedTagsPatterns)
     .map(([file, tagData]) => {
       let h1Keywords: string[] | undefined;
+      let mainKeywords: string[] | undefined;
 
       if (TagsName.h1 in tagData) {
         h1Keywords = tagData.h1.keywordsIncluded;
+      }
+      if (AdditionalTagsName.keywords in tagData) {
+        mainKeywords = tagData.keywords.keywordsIncluded;
       }
 
       const dataForMissingSection: DataToMissingSection = {
         description: { missingKeywords: [], toMuchKeywords: [] },
         h1: { missingKeywords: [], toMuchKeywords: [] },
-        keywords: { missingKeywords: [], toMuchKeywords: [] },
         title: { missingKeywords: [], toMuchKeywords: [] },
         lastSentence: { missingKeywords: [], toMuchKeywords: [] },
       };
@@ -55,7 +59,11 @@ const generateTableRows = ({
       Object.entries(tagData).forEach(([_tag, _value]) => {
         const tag = _tag as AllTagsName;
         const value = _value as CombineTagsWithReason;
-        const { missingKeywords, toMuchKeywords } = value;
+        const { missingKeywords, toMuchKeywords, isError } = value;
+
+        if (isError) {
+          numberOfErrors++;
+        }
 
         if (tag in TagsName || (tag in AdditionalTagsName && tag !== "canonical")) {
           dataForMissingSection[tag as TagsToMissingSection] = {
@@ -68,6 +76,8 @@ const generateTableRows = ({
       const missingSection = generateMissingKeywordsSection({
         h1Keywords,
         data: dataForMissingSection,
+        countKeywords,
+        mainKeywords,
       });
 
       const row = (missingSection: string) => {
@@ -99,38 +109,41 @@ const generateTableRows = ({
         return mainSection + missingSection + metaTagSection;
       };
 
-      return `<thead>
-          <tr>
-          <th colspan="2"> 
-          <span>${file}</span>
-          <span class="toggle-button" id="toggle-button-${tableIndex}">▼</span>
-          </th>
-          </tr>
-          </thead>
-          <tbody id="toggle-body-${tableIndex}" class="hidden">
-            ${row(missingSection)}    
-          </tbody>
-          <tr class="empty-row"/>
-            <script>
-                document.addEventListener("DOMContentLoaded", () => {
-                  const toggleButton = document.getElementById("toggle-button-${tableIndex}");
-                  const toggleBody = document.getElementById("toggle-body-${tableIndex}");
-                  toggleButton &&
-                    toggleBody &&
-                    toggleButton.addEventListener("click", () => {
-                      if (toggleBody.classList.contains("hidden")) {
+      return `
+      <table>
+    <thead>
+        <tr>
+            <th colspan="2">
+                ${file} | ${numberOfErrors > 0 ? `Number of errors: (${numberOfErrors})` : ""}
+                <span class="toggle-button" id="toggle-button-${tableIndex}">▼</span>
+            </th>
+        </tr>
+    </thead>
+    <tbody id="toggle-body-${tableIndex}" class="hidden">
+        ${row(missingSection)}
+    </tbody>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const toggleButton = document.getElementById("toggle-button-${tableIndex}");
+            const toggleBody = document.getElementById("toggle-body-${tableIndex}");
+            toggleButton &&
+                toggleBody &&
+                toggleButton.addEventListener("click", () => {
+                    if (toggleBody.classList.contains("hidden")) {
                         toggleBody.classList.remove("hidden");
                         toggleButton.textContent = "▲";
-                      } else {
+                    } else {
                         toggleBody.classList.add("hidden");
                         toggleButton.textContent = "▼";
-                      }
-                    });
-                })
-            </script>
-          `;
+                    }
+                });
+        })
+    </script>
+</table>
+  `;
     })
     .join("");
+  return { row, numberOfErrors };
 };
 
 export const prepareHTMLWithTables = ({
@@ -141,119 +154,153 @@ export const prepareHTMLWithTables = ({
   trailingSlash,
   domain,
 }: PrepareHtml): string => {
-  let brokenTagsTable: string = "";
+  const brokenTagsTable: { row: string; numberOfErrors: number }[] = [];
+  const correctTagsTable: { row: string; numberOfErrors: number }[] = [];
   combinedTagsPatterns.map((combinedTagsPattern, idx) => {
-    brokenTagsTable =
-      brokenTagsTable +
-      generateTableRows({
-        combinedTagsPatterns: combinedTagsPattern,
-        countKeywords,
-        countWordsInLast,
-        advancedAnalyzer,
-        tableIndex: idx,
-        trailingSlash,
-        domain,
-      });
+    const { numberOfErrors, row } = generateTableRows({
+      combinedTagsPatterns: combinedTagsPattern,
+      countKeywords,
+      countWordsInLast,
+      advancedAnalyzer,
+      tableIndex: idx,
+      trailingSlash,
+      domain,
+    });
+    if (numberOfErrors === 0) {
+      correctTagsTable.push({ numberOfErrors, row });
+    } else {
+      brokenTagsTable.push({ numberOfErrors, row });
+    }
   });
 
-  return `<!DOCTYPE html>
-    <html>
-      <head>
-        <title>SEO analyze</title>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <style>
-          .toggle-button {
-            cursor: pointer;
-          }
-          .hidden {
-            display: none;
-          }
+  const brokenTags = brokenTagsTable
+    .sort((a, b) => a.numberOfErrors - b.numberOfErrors)
+    .map(tagTable => tagTable.row)
+    .join("");
+
+  const correctTags = correctTagsTable.map(tagTable => tagTable.row).join("");
+
+  return `
+  <!DOCTYPE html>
+  <html>
+  
+  <head>
+      <title>SEO analyze</title>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <style>
           body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f9f9f9;
+              font-family: Arial, sans-serif;
+              margin: 20px;
+              background-color: #f9f9f9;
           }
+  
           h1 {
-            margin-bottom: 20px;
+              margin-bottom: 20px;
           }
+  
           h4 {
-            word-break: break-word;
-            margin-bottom: 12px;
+              word-break: break-word;
+              margin-bottom: 12px;
           }
+  
           table {
-            border-collapse: collapse;
-            width: 100%;
-            animation: fadeIn 0.5s ease-in-out;
-            }
+              border-collapse: collapse;
+              width: 100%;
+              margin: 30px 0px 60px;
+          }
+  
           th,
           td {
-            border: 1px solid black;
-            padding: 8px;
-            text-align: left;
-            justify-content: space-between;
+              border: 1px solid black;
+              padding: 8px;
+              text-align: left;
+              justify-content: space-between;
           }
+  
           th {
-            background-color: #f2f2f2;
+              background-color: #f2f2f2;
           }
+  
           tr:nth-child(even) {
-            background-color: #f2f2f2;
+              background-color: #f2f2f2;
           }
+  
           .center {
-            text-align: center;
+              text-align: center;
           }
-          .tag-container {
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            padding: 12px;
-            margin-bottom: 20px;
-            display: flex;
-            flex-direction: column;
-            animation: fadeIn 0.5s ease-in-out;
-            max-width: 420px;
-            min-width: 420px;
+  
+          .toggle-button {
+              cursor: pointer;
           }
-          .tag-row {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            word-break: break-word;
+  
+          .hidden {
+              display: none;
           }
-          .tag-label {
-            font-weight: bold;
-            margin-right: 8px;
-            flex: 1;
-            overflow-wrap: break-word;
+      </style>
+  </head>
+  
+  <body>
+      <h1>Report for ${domain}</h1>
+      <table>
+          ${
+            correctTagsTable.length > 0
+              ? `
+          <thead>
+              <tr>
+                  <th colspan="2">Correct Tags (${correctTagsTable.length}) <span class="toggle-button"
+                          id="toggle-button-correct">▼</span></th>
+              </tr>
+          </thead>
+          <td id="toggle-body-correct" style="padding:0px 12px">
+              ${correctTags}
+          </td>
+          `
+              : ""
           }
-          .tag-value {
-            font-weight: bold;
-            font-size: 16px;
-            flex: 1;
-            overflow-wrap: break-word;
-            display: flex;
-            justify-content: flex-end;
-          }
-          .empty-row {
-            border: none;
-            height: 40px;
-          }
-          @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-          }
-          .tag-container:hover {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-          }
-        </style>
-      </head>
-      <body>
-        <h1>Report</h1>
-        <table>
-          ${brokenTagsTable}
-        </table>
-      
-      </body>
-    </html>`;
+      </table>
+      <table>
+          <tr>
+              <th colspan="2">Broken Tags (${
+                brokenTagsTable.length
+              }) <span class="toggle-button" id="toggle-button-broken">▼</span></th>
+          </tr>
+          <td id="toggle-body-broken" style="padding:0px 12px">
+              ${brokenTags}
+          </td>
+      </table>
+  </body>
+  <script>
+      document.addEventListener("DOMContentLoaded", () => {
+          const toggleButtonCorrect = document.getElementById("toggle-button-correct");
+          const toggleBodyCorrect = document.getElementById("toggle-body-correct");
+          const toggleButtonBroken = document.getElementById("toggle-button-broken");
+          const toggleBodyBroken = document.getElementById("toggle-body-broken");
+          toggleButtonCorrect &&
+              toggleBodyCorrect &&
+              toggleButtonCorrect.addEventListener("click", () => {
+                  if (toggleBodyCorrect.classList.contains("hidden")) {
+                      toggleBodyCorrect.classList.remove("hidden");
+                      toggleButtonCorrect.textContent = "▲";
+                  } else {
+                      toggleBodyCorrect.classList.add("hidden");
+                      toggleButtonCorrect.textContent = "▼";
+                  }
+              });
+          toggleButtonBroken &&
+              toggleBodyBroken &&
+              toggleButtonBroken.addEventListener("click", () => {
+                  if (toggleBodyBroken.classList.contains("hidden")) {
+                      toggleBodyBroken.classList.remove("hidden");
+                      toggleButtonBroken.textContent = "▲";
+                  } else {
+                      toggleBodyBroken.classList.add("hidden");
+                      toggleButtonBroken.textContent = "▼";
+                  }
+              });
+      })
+  </script>
+  
+  </html>
+  `;
 };

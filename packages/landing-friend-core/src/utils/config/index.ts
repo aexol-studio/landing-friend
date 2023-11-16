@@ -1,6 +1,7 @@
-import { message } from "../../index.js";
 import fs from "fs";
 import path from "path";
+
+import { message } from "../../index.js";
 
 export const getHtmlFiles = (base: string, deleteFileExtension: boolean) => {
   const baseWithoutDot = base.replace(/\.\//g, "");

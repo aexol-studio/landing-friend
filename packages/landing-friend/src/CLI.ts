@@ -1,8 +1,7 @@
-#!/usr/bin/env node
+// #!/usr/bin/env node
+import { message, readConfig, sitemapGenerator, websiteAnalyzer } from "@landing-friend/core";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
-
-import { message, readConfig, sitemapGenerator, websiteAnalyzer } from "@landing-friend/core";
 
 import { configInit } from "./index.js";
 
@@ -25,7 +24,10 @@ yargs(hideBin(process.argv))
           "It generates a configuration file containing basic or extended configuration depending on the selected options.",
       },
     },
-    async () => await configInit()
+    async () => {
+      console.clear();
+      await configInit();
+    }
   )
   .command(
     "generate",
@@ -36,24 +38,53 @@ yargs(hideBin(process.argv))
       },
     },
     async () => {
-      const config = readConfig("landing-friend-config.ts");
-      if (!config) {
-        message("Config not found", "red");
-        return;
-      }
-      try {
-        message("Generating sitemap...", "yellow");
-        sitemapGenerator(config).generateAll();
-        message("Sitemap generated", "green");
-      } catch (e) {
-        const error = e as Error;
-        message(error.message, "red");
-        if (error.message === "There are locales in your project.") {
-          return;
+      console.clear();
+      const config = readConfig("landing-friend-config.ts", "generate");
+      if (config) {
+        try {
+          message("Generating sitemap...", "yellow");
+          sitemapGenerator(config).generateAll();
+          message("Sitemap generated", "green");
+        } catch (e) {
+          const error = e as Error;
+          message(error.message, "red");
+          if (error.message === "There are locales in your project.") {
+            return;
+          }
         }
       }
     }
   )
+  //!!!!!!!
+  // USE IT INSTEAD OF BELOW COMMAND IF U WANT CONSOLE.LOG SOMETHING
+  //
+  //   .command(
+  //     "analyze",
+  //     "Analyze your landing page",
+  //     {
+  //       help: {
+  //         describe:
+  //           "Analysis of your website through defined values in the config generates HTML and JSON files.",
+  //       },
+  //     },
+  //     async () => {
+  //       const config = readConfig("landing-friend-config.ts");
+  //       if (!config) {
+  //         message("Config not found", "red");
+  //         return;
+  //       }
+  //       try {
+  //         message("Analyzing your page...", "yellow");
+  //         await websiteAnalyzer(config);
+  //       } catch (e) {
+  //         const error = e as Error;
+  //         message(error.message, "red");
+  //         return;
+  //       } finally {
+  //         process.exit();
+  //       }
+  //     }
+  //   )
   .command(
     "analyze",
     "Analyze your landing page",
@@ -64,14 +95,28 @@ yargs(hideBin(process.argv))
       },
     },
     async () => {
-      const config = readConfig("landing-friend-config.ts");
+      const config = readConfig("landing-friend-config.ts", "generate");
       if (!config) {
-        message("Config not found", "red");
+        message(
+          "No config detected. Please create one using init command or create it manually",
+          "red"
+        );
         return;
       }
+
+      const char = ".";
+      const maxChar = 3;
+      let progress = "";
+      const interval = setInterval(() => {
+        if (progress.length < maxChar) {
+          progress += char;
+          console.clear();
+          message(`Analyzing your page${progress}`, "yellow");
+        } else progress = "";
+      }, 500);
+
       try {
-        message("Analyzing your page...", "yellow");
-        await websiteAnalyzer(config);
+        await websiteAnalyzer(config, interval);
       } catch (e) {
         const error = e as Error;
         message(error.message, "red");

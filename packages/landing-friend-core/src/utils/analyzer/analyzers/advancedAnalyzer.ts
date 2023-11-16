@@ -1,12 +1,12 @@
 import {
-  AdvancedTagsProps,
-  staticTags,
-  unicode,
-  forbiddenCharacters as _forbiddenCharacters,
   AdvancedTagsNameType,
   AdvancedTagsPatterns,
-  MetaNameWithProps,
+  AdvancedTagsProps,
+  forbiddenCharacters as _forbiddenCharacters,
   MetaNameTagsProps,
+  MetaNameWithProps,
+  staticTags,
+  unicode,
 } from "@/index.js";
 
 interface MatchedArrayProps {
@@ -18,9 +18,9 @@ const matchedTags = (advancedTags: AdvancedTagsNameType, fileContent: string) =>
   const matchedArray: { [tagName: string]: MatchedArrayProps }[] = [];
 
   if (advancedTags === "og") {
-    regex = new RegExp('<meta property="og:(.*?)" content="(.*?)".*?/>', "gs");
+    regex = new RegExp(`<meta property="og:(.*?)" content="(.*?)".*?/>`, "gs");
   } else if (advancedTags === "twitter") {
-    regex = new RegExp('<meta name="twitter:(.*?)" content="(.*?)".*?/>', "gs");
+    regex = new RegExp(`<meta name="twitter:(.*?)" content="(.*?)".*?/>`, "gs");
   }
 
   if (regex) {
@@ -109,7 +109,7 @@ export const checkFileToAdvanceAnalyzer = async ({
           [tag]: {
             tagAmount: matches.length,
             listOfFoundMeta,
-            isError: Object.values(listOfFoundMeta).some(value => value?.status !== "OK"),
+            isError: Object.values(listOfFoundMeta).some(value => value?.status === "Not Found"),
           } as MetaNameTagsProps,
         };
       }

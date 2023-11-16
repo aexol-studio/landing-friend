@@ -1,20 +1,22 @@
-import path from "path";
+import fs from "fs";
 import open, { apps } from "open";
+import path from "path";
+
 import {
+  AdvancedTagsName,
+  AllTagsName,
+  checkFiles,
+  CombinedPatterns,
+  CombineTagsWithReason,
   ConfigFile,
+  getHtmlFiles,
   matchedSetting,
   message,
-  checkFiles,
   prepareHTMLWithTables,
-  CombinedPatterns,
-  AllTagsName,
   saveAnalyze,
-  CombineTagsWithReason,
-  getHtmlFiles,
-  AdvancedTagsName,
-} from "./index.js";
+} from "@/index.js";
 
-export const websiteAnalyzer = async (config: ConfigFile) => {
+export const websiteAnalyzer = async (config: ConfigFile, interval: NodeJS.Timer) => {
   const { input, analyzer, advancedAnalyzer, excludedPage, sitemap, domain } = config;
   if (!analyzer) {
     return message("Define analyzer in config", "redBright");
@@ -40,6 +42,9 @@ export const websiteAnalyzer = async (config: ConfigFile) => {
           input,
           tags: analyzer,
           advancedTags: advancedAnalyzer,
+          domain,
+          countKeywords: analyzer.keywords.count,
+          countWordsInLast: analyzer.lastSentence.count,
         })
       );
     }
@@ -61,65 +66,50 @@ export const websiteAnalyzer = async (config: ConfigFile) => {
       Object.entries(tagData).forEach(([_tag, _value]) => {
         const tag = _tag as AllTagsName;
         const value = _value as CombineTagsWithReason;
-        if (
-          !(tag === "keywords" && analyzer.keywords.count) &&
-          !(tag === "lastSentence" && analyzer.lastSentence.count)
-        ) {
-          tagArray = {
-            ...tagArray,
-            [tag]: {
-              requirement: value.requirement && value.requirement.replace(/<\/?strong>/gs, ""),
-              quantity: value.quantity,
-              content: value.content,
-              forbiddenCharacters: value.forbiddenCharacters,
-              keywordsIncluded: tag !== "keywords" ? value.keywordsIncluded : undefined,
-              multipleTags: value.multipleTags,
-              tagAmount: tag in AdvancedTagsName ? value.tagAmount : undefined,
-              listOfFoundMeta: value.listOfFoundMeta,
-              isError: value.isError,
-              missingKeywords: value.missingKeywords,
-              toMuchKeywords: value.toMuchKeywords,
-            } as CombineTagsWithReason,
-          } as Record<AllTagsName, CombineTagsWithReason>;
-        } else {
-          tagArray = {
-            ...tagArray,
-            [tag]: {
-              requirement: value.requirement && value.requirement.replace(/<\/?strong>/gs, ""),
-              quantity: value.quantity,
-              content: value.content,
-              forbiddenCharacters: value.forbiddenCharacters,
-              keywordsIncluded: tag !== "keywords" ? value.keywordsIncluded : undefined,
-              multipleTags: value.multipleTags,
-              tagAmount: value.tagAmount,
-              isError: value.isError,
-              missingKeywords: value.missingKeywords,
-              toMuchKeywords: value.toMuchKeywords,
-            } as CombineTagsWithReason,
-          } as Record<AllTagsName, CombineTagsWithReason>;
-        }
+        tagArray = {
+          ...tagArray,
+          [tag]: {
+            requirement: value.requirement && value.requirement.replace(/<\/?strong>/gs, ""),
+            quantity: value.quantity,
+            content: value.content,
+            forbiddenCharacters: value.forbiddenCharacters,
+            keywordsIncluded: tag !== "keywords" ? value.keywordsIncluded : undefined,
+            multipleTags: value.multipleTags,
+            tagAmount: tag in AdvancedTagsName ? value.tagAmount : undefined,
+            listOfFoundMeta: value.listOfFoundMeta,
+            isError: value.isError,
+            missingKeywords: value.missingKeywords,
+            toMuchKeywords: value.toMuchKeywords,
+          } as CombineTagsWithReason,
+        } as Record<AllTagsName, CombineTagsWithReason>;
       });
       cleanedTagsPatterns[file] = tagArray;
     });
   });
+
+  const location = "./SEO";
+  const fileName = (extension: ".json" | ".html") => `seo-analyze${extension}`;
+  const pathname = (extension: ".json" | ".html") => `${location}/${fileName(extension)}`;
+  clearTimeout(interval);
   try {
-    saveAnalyze("./SEO/seo-analyze.json", JSON.stringify(cleanedTagsPatterns, null, 2));
-    saveAnalyze("./SEO/seo-analyze.html", htmlWithTablesAndCharts);
+    saveAnalyze(pathname(".json"), JSON.stringify(cleanedTagsPatterns, null, 2));
+    saveAnalyze(pathname(".html"), htmlWithTablesAndCharts);
     message(
       "Your website has been analyzed, JSON and html files have been generated in ./SEO",
       "green"
     );
   } catch {
     message("Failed to create files", "red");
-    return;
-  }
-  try {
-    await open(path.join(process.cwd(), "./SEO", "seo-analyze.html"), {
-      app: { name: apps.browser },
-    });
-    message("The analysis file has been opened in your browser.", "green");
-  } catch {
-    message("Cannot open browser. Please open file manually", "red");
-    return;
+  } finally {
+    if (fs.existsSync(path.join(process.cwd(), location, fileName(".html")))) {
+      try {
+        await open(path.join(process.cwd(), location, fileName(".html")), {
+          app: { name: apps.browser },
+        });
+        message("The analysis file has been opened in your browser.", "green");
+      } catch {
+        message("Cannot open browser. Please open file manually", "red");
+      }
+    }
   }
 };

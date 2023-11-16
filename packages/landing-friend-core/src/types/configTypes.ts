@@ -1,4 +1,5 @@
 import { LanguageCode } from "iso-639-1";
+
 import { AdvancedTagsProps, TagsProps } from "./index.js";
 
 export type SitemapSettings = {

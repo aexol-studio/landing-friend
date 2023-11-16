@@ -1,17 +1,17 @@
 import {
-  GLOBAL_CONFIG_FILE,
-  EXTENDED_SITEMAP_GLOBAL_CONFIG_FILE,
-  EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE,
+  ConfigFile,
   EXTENDED_ADVANCED_ANALYZER_GLOBAL_CONFIG_FILE,
+  EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE,
+  EXTENDED_SITEMAP_GLOBAL_CONFIG_FILE,
+  GLOBAL_CONFIG_FILE,
   initConfig,
   message,
   readConfig,
-  ConfigFile,
 } from "@landing-friend/core";
 import inquirer from "inquirer";
 
 export const configInit = async () => {
-  const config = readConfig("landing-friend-config.ts");
+  const config = readConfig("landing-friend-config.ts", "init");
   if (config) {
     message("Config already exists", "red");
     return;
@@ -84,7 +84,7 @@ export const configInit = async () => {
       {
         type: "confirm",
         name: "sitemap.trailingSlash",
-        message: 'Whether to add "/" at the end of the url ?',
+        message: `Whether to add "/" at the end of the url ?`,
         default: EXTENDED_SITEMAP_GLOBAL_CONFIG_FILE.sitemap?.trailingSlash,
       },
     ]);

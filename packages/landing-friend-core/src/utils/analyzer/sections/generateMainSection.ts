@@ -1,4 +1,4 @@
-import { BasicTagsName, CombineTagsWithReason, AdditionalTagsName } from "@/index.js";
+import { AdditionalTagsName, BasicTagsName, CombineTagsWithReason } from "@/index.js";
 
 interface Props {
   tag: BasicTagsName;
@@ -20,6 +20,7 @@ export const generateMainSection = ({
   domain,
 }: Props) => {
   if (!countWordsInLast && tag === "lastSentence") return "";
+  if (!countKeywords && tag === "keywords") return "";
   if (value.multipleTags) {
     return `<td><strong style="color: red">Warning! Number of multiple ${tag} on the page: ${value.quantity}</strong></td><td width="20%"><strong style="color: red">Check the code</strong></td>`;
   } else {
@@ -40,11 +41,19 @@ export const generateMainSection = ({
         ? `<strong style="color: ${
             tag !== "canonical" ? "black" : value.content === url ? "black" : "red"
           }">
-        ${typeof value.content === "string" ? value.content : value.content?.join(", ")}
+        ${
+          typeof value.content === "string"
+            ? value.content.includes("https")
+              ? `<a href="${value.content}" style="cursor:pointer">${value.content}</a>${
+                  value.content !== url ? ` | Url not match` : ""
+                }`
+              : value.content
+            : value.content?.join(", ")
+        }
         </strong>
         `
-        : "No words detected"
-      : "No characters detected"
+        : `<strong style="color:red">No words detected</strong>`
+      : `<strong style="color:red">No characters detected/strong>`
   }
  ${
    value.quantity > 0 && countKeywords && tag !== "keywords" && tag !== "canonical"
@@ -52,7 +61,7 @@ export const generateMainSection = ({
        ? ` | <strong style="color:green">Keywords included: ${value.keywordsIncluded.join(
            ", "
          )}</strong>`
-       : ' | <strong style="color:red">Does not contain keywords</strong>'
+       : ` | <strong style="color:red">Does not contain keywords</strong>`
      : ""
  }
       ${
@@ -65,7 +74,9 @@ export const generateMainSection = ({
     //Second cell in row
     const secondCell = `<td width="20%">
 ${
-  !value.requirement
+  value.content?.length === 0
+    ? `<strong style="color:red">${value.requirement}</strong>`
+    : !value.requirement
     ? ""
     : value.minLength && value.maxLength
     ? `<span style="${
@@ -73,12 +84,15 @@ ${
           ? "color: black"
           : "color: red"
       }">${value.requirement}</span>`
-    : (value.keywordsIncluded && value.keywordsIncluded.length > 0) ||
-      (value.missingKeywords && value.missingKeywords.length === 0) ||
-      (value.toMuchKeywords && value.toMuchKeywords.length === 0) ||
+    : (countKeywords &&
+        ((value.keywordsIncluded && value.keywordsIncluded.length > 0) ||
+          (value.missingKeywords && value.missingKeywords.length === 0) ||
+          (value.toMuchKeywords && value.toMuchKeywords.length === 0))) ||
       value.content === url
     ? ""
-    : `<strong style="color:red">${value.requirement}</strong>`
+    : countKeywords
+    ? `<strong style="color:red">${value.requirement}</strong>`
+    : ""
 }
     </td>`;
 

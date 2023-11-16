@@ -5,13 +5,17 @@ interface ValueOfTag {
   missingKeywords: string[];
 }
 
-export type TagsToMissingSection = Exclude<AdditionalTagsNameType, "canonical"> | TagsNameType;
+export type TagsToMissingSection =
+  | Exclude<AdditionalTagsNameType, "canonical" | "keywords">
+  | TagsNameType;
 
 export type DataToMissingSection = Record<TagsToMissingSection, ValueOfTag>;
 
 interface Props {
   h1Keywords: string[] | undefined;
+  mainKeywords: string[] | undefined;
   data: DataToMissingSection;
+  countKeywords: boolean;
 }
 
 const generateRow = (tag: string, keywordsList: string[]) => {
@@ -21,7 +25,14 @@ const generateRow = (tag: string, keywordsList: string[]) => {
   return "";
 };
 
-export const generateMissingKeywordsSection = ({ h1Keywords, data }: Props) => {
+export const generateMissingKeywordsSection = ({
+  h1Keywords,
+  data,
+  countKeywords,
+  mainKeywords,
+}: Props) => {
+  if (!countKeywords) return "";
+  if (!mainKeywords) return "";
   let sections = "";
   let missingKeywords = "";
   let toMuchKeywords = "";
