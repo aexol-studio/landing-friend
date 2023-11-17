@@ -42,10 +42,10 @@ const generateTableRows = ({
       let h1Keywords: string[] | undefined;
       let mainKeywords: string[] | undefined;
 
-      if (TagsName.h1 in tagData) {
+      if (TagsName.H1 in tagData) {
         h1Keywords = tagData.h1.keywordsIncluded;
       }
-      if (AdditionalTagsName.keywords in tagData) {
+      if (AdditionalTagsName.Keywords in tagData) {
         mainKeywords = tagData.keywords.keywordsIncluded;
       }
 

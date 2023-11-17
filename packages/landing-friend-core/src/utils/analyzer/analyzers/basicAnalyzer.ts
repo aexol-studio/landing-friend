@@ -1,12 +1,12 @@
 import {
+  AdditionalTagsName,
   BasicTagsName,
+  clearContent,
   forbiddenCharacters as _forbiddenCharacters,
-  staticTags,
   TagsName,
   TagsPatterns,
   TagsProps,
   TagsWithReason,
-  unicode,
 } from "@/index.js";
 
 const arrayFilter = (firstArray: string[], secondArray: string[]) => {
@@ -15,15 +15,15 @@ const arrayFilter = (firstArray: string[], secondArray: string[]) => {
 
 const checkContent = (tagName: BasicTagsName, fileContent: string) => {
   let regex: RegExp | undefined;
-  let matches: RegExpMatchArray | null = null;
+  let matches: string[] | RegExpMatchArray | null = null;
 
   if (tagName === "description") {
     regex = new RegExp(`<meta name="description" content="(.*?)"`, "g");
-  } else if (tagName === "keywords") {
+  } else if (tagName === AdditionalTagsName.Keywords) {
     regex = new RegExp(`<meta property="keywords" content="(.*?)"`, "g");
-  } else if (tagName === "canonical") {
+  } else if (tagName === AdditionalTagsName.Canonical) {
     regex = new RegExp(`<link rel="canonical" href="(.*?)"`, "g");
-  } else if (tagName === "lastSentence") {
+  } else if (tagName === AdditionalTagsName.LastSentence) {
     regex = new RegExp(`<div.*?>(.*?)</div>`, "g");
   } else {
     regex = new RegExp(`<${tagName}.*?>(.*?)</${tagName}>`, "g");
@@ -31,7 +31,7 @@ const checkContent = (tagName: BasicTagsName, fileContent: string) => {
 
   matches = regex && fileContent.match(regex);
 
-  if (tagName === "lastSentence" && matches !== null) {
+  if (tagName === AdditionalTagsName.LastSentence && matches !== null) {
     const lastMatch = matches[matches.length - 1];
     matches = lastMatch !== undefined ? [lastMatch] : null;
   }
@@ -41,25 +41,11 @@ const checkContent = (tagName: BasicTagsName, fileContent: string) => {
     updatedMatches.forEach((match, index) => {
       const captureGroups = regex!.exec(match);
       if (captureGroups) {
-        let content = captureGroups[1];
-        staticTags.forEach(staticTag => {
-          const staticTagRegex = new RegExp(
-            `<${staticTag}.*?>|</${staticTag}>|\\.css.*?}|@media.*?}|{|}`,
-            "g"
-          );
-          Object.entries(unicode).forEach(([unicode, replacement]) => {
-            const unicodeRegex = new RegExp(`${unicode}`, "g");
-            content = content.replace(unicodeRegex, replacement);
-          });
-
-          content = content.replace(staticTagRegex, "");
-        });
-
-        updatedMatches[index] = content;
+        updatedMatches[index] = clearContent(captureGroups[1])!;
       }
     });
 
-    matches = updatedMatches as RegExpMatchArray;
+    matches = updatedMatches;
   }
 
   return matches;
@@ -89,8 +75,8 @@ export const checkFileToBasicAnalyzer = ({
   const url = domain + file.replace("index.html", "");
 
   if (tags.keywords.count) {
-    const keywordsMatch = checkContent("keywords", fileContent);
-    const h1Match = checkContent("h1", fileContent);
+    const keywordsMatch = checkContent(AdditionalTagsName.Keywords, fileContent);
+    const h1Match = checkContent(TagsName.H1, fileContent);
 
     if (keywordsMatch && keywordsMatch.length > 0) {
       const keywords = keywordsMatch[0].split(", ");
@@ -107,8 +93,8 @@ export const checkFileToBasicAnalyzer = ({
     const tag = _tag as BasicTagsName;
     const value = _value as TagsWithReason;
 
-    if (!countKeywords && tag === "keywords") return;
-    if (!countWordsInLast && tag === "lastSentence") return;
+    if (!countKeywords && tag === AdditionalTagsName.Keywords) return;
+    if (!countWordsInLast && tag === AdditionalTagsName.LastSentence) return;
     const matches = checkContent(tag, fileContent);
 
     if (matches) {
@@ -130,11 +116,11 @@ export const checkFileToBasicAnalyzer = ({
           let toMuchKeywords: string[] = [];
 
           const tagKeywords =
-            tag === "canonical"
+            tag === AdditionalTagsName.Canonical
               ? undefined
               : !tags.keywords.count
               ? undefined
-              : tag === "keywords"
+              : tag === AdditionalTagsName.Keywords
               ? mainKeywordsArray
               : mainKeywordsArray.length > 0
               ? mainKeywordsArray.filter(keyword =>
@@ -143,7 +129,7 @@ export const checkFileToBasicAnalyzer = ({
               : undefined;
 
           if (h1Keywords.length > 0) {
-            if (tag in TagsName || tag === "lastSentence") {
+            if (tag in TagsName || tag === AdditionalTagsName.LastSentence) {
               missingKeywords = arrayFilter(h1Keywords, tagKeywords ? tagKeywords : []);
               toMuchKeywords = arrayFilter(tagKeywords ? tagKeywords : [], h1Keywords);
             }
@@ -155,7 +141,7 @@ export const checkFileToBasicAnalyzer = ({
               minLength && maxLength && (match.length < minLength || match.length > maxLength);
             const isH1Exist =
               countKeywords && mainKeywordsArray.length > 0
-                ? tag === "h1" && h1Keywords.length === 0
+                ? tag === TagsName.H1 && h1Keywords.length === 0
                 : false;
             const areKeywordsMissingOrExcessive =
               countKeywords || isH1Exist || mainKeywordsArray.length === 0
@@ -166,7 +152,7 @@ export const checkFileToBasicAnalyzer = ({
               isLengthInvalid ||
               areKeywordsMissingOrExcessive ||
               isH1Exist ||
-              (tag === "canonical" && match !== url) ||
+              (tag === AdditionalTagsName.Canonical && match !== url) ||
               forbiddenCharacters.length > 0
             );
           };
@@ -179,15 +165,15 @@ export const checkFileToBasicAnalyzer = ({
                 maxLength: value.maxLength,
                 minLength: value.minLength,
                 requirement:
-                  tag === "keywords"
+                  tag === AdditionalTagsName.Keywords
                     ? undefined
-                    : tag === "lastSentence"
+                    : tag === AdditionalTagsName.LastSentence
                     ? "Tag should contain the same keywords as upper tags"
-                    : tag === "canonical"
+                    : tag === AdditionalTagsName.Canonical
                     ? "The canonical link must be the same as the URL."
                     : `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
                 quantity: match.length,
-                content: tag === "keywords" ? tagKeywords : match,
+                content: tag === AdditionalTagsName.Keywords ? tagKeywords : match,
                 multipleTags: undefined,
                 keywordsIncluded: tagKeywords,
                 forbiddenCharacters:
@@ -205,11 +191,11 @@ export const checkFileToBasicAnalyzer = ({
         [tag]: {
           ...value,
           requirement:
-            tag === "keywords"
+            tag === AdditionalTagsName.Keywords
               ? "At least one keyword required"
-              : tag === "lastSentence"
+              : tag === AdditionalTagsName.LastSentence
               ? "Tag should contain the same keywords as upper tags"
-              : tag === "canonical"
+              : tag === AdditionalTagsName.Canonical
               ? "The canonical link must be the same as the URL."
               : `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
           quantity: 0,

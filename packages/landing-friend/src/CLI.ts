@@ -1,5 +1,11 @@
 // #!/usr/bin/env node
-import { message, readConfig, sitemapGenerator, websiteAnalyzer } from "@landing-friend/core";
+import {
+  message,
+  readConfig,
+  searchDuplicated,
+  sitemapGenerator,
+  websiteAnalyzer,
+} from "@landing-friend/core";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 
@@ -68,6 +74,7 @@ yargs(hideBin(process.argv))
   //       },
   //     },
   //     async () => {
+  // console.clear();
   //       const config = readConfig("landing-friend-config.ts");
   //       if (!config) {
   //         message("Config not found", "red");
@@ -95,6 +102,7 @@ yargs(hideBin(process.argv))
       },
     },
     async () => {
+      console.clear();
       const config = readConfig("landing-friend-config.ts", "generate");
       if (!config) {
         message(
@@ -126,6 +134,81 @@ yargs(hideBin(process.argv))
       }
     }
   )
+  //!!!!!!!
+  // USE IT INSTEAD OF BELOW COMMAND IF U WANT CONSOLE.LOG SOMETHING
+  //
+  .command(
+    "duplicated",
+    "Find duplicated content",
+    {
+      help: {
+        describe: "Search the out file to find duplicated content on your site.",
+      },
+    },
+    async () => {
+      console.clear();
+      const config = readConfig("landing-friend-config.ts", "generate");
+      if (!config) {
+        message(
+          "No config detected. Please create one using init command or create it manually",
+          "red"
+        );
+        return;
+      }
+
+      try {
+        message("Searching for duplicates...", "yellow");
+        await searchDuplicated(config);
+      } catch (e) {
+        const error = e as Error;
+        message(error.message, "red");
+        return;
+      } finally {
+        process.exit();
+      }
+    }
+  )
+  // .command(
+  //   "duplicated",
+  //   "Find duplicated content",
+  //   {
+  //     help: {
+  //       describe: "Search the out file to find duplicated content on your site.",
+  //     },
+  //   },
+  //   async () => {
+  // console.clear();
+  //     const config = readConfig("landing-friend-config.ts", "generate");
+  //     if (!config) {
+  //       message(
+  //         "No config detected. Please create one using init command or create it manually",
+  //         "red"
+  //       );
+  //       return;
+  //     }
+
+  //     const char = ".";
+  //     const maxChar = 3;
+  //     let progress = "";
+  //     const interval = setInterval(() => {
+  //       if (progress.length < maxChar) {
+  //         progress += char;
+  //         console.clear();
+  //         message(`Searching for duplicates${progress}`, "yellow");
+  //       } else progress = "";
+  //     }, 500);
+
+  //     try {
+  //       await searchDuplicated(config, interval);
+  //     } catch (e) {
+  //       const error = e as Error;
+  //       message(error.message, "red");
+  //       return;
+  //     } finally {
+  //       process.exit();
+  //     }
+  //   }
+  // )
   .help()
   .showHelpOnFail(true)
   .strict()

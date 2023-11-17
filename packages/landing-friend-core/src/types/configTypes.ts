@@ -1,6 +1,6 @@
 import { LanguageCode } from "iso-639-1";
 
-import { AdvancedTagsProps, TagsProps } from "./index.js";
+import { AdvancedTagsProps, TagsProps } from "@/index.js";
 
 export type SitemapSettings = {
   locale: {
@@ -20,4 +20,5 @@ export type ConfigFile = {
   sitemap?: SitemapSettings;
   analyzer?: TagsProps;
   advancedAnalyzer?: AdvancedTagsProps;
+  searchDuplicated?: boolean;
 };

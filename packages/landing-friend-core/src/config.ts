@@ -47,6 +47,10 @@ export const EXTENDED_ADVANCED_ANALYZER_GLOBAL_CONFIG_FILE: Pick<ConfigFile, "ad
   },
 };
 
+export const EXTENDED_DUPLICATED_ANALYZER_CONFIG_FILE: Pick<ConfigFile, "searchDuplicated"> = {
+  searchDuplicated: true,
+};
+
 export const readConfig = (filePath: string, option: "init" | "generate") => {
   if (!fs.existsSync(filePath)) {
     if (option === "generate") {

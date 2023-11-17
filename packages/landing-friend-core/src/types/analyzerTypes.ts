@@ -1,25 +1,25 @@
 export enum AdvancedTagsName {
-  og = "og",
-  twitter = "twitter",
+  Og = "og",
+  Twitter = "twitter",
 }
 
-export type AdvancedTagsNameType = keyof typeof AdvancedTagsName;
+export type AdvancedTagsNameType = `${AdvancedTagsName}`;
 
 export enum TagsName {
-  h1 = "h1",
-  title = "title",
-  description = "description",
+  H1 = "h1",
+  Title = "title",
+  Description = "description",
 }
 
-export type TagsNameType = keyof typeof TagsName;
+export type TagsNameType = `${TagsName}`;
 
 export enum AdditionalTagsName {
-  lastSentence = "lastSentence",
-  keywords = "keywords",
-  canonical = "canonical",
+  LastSentence = "lastSentence",
+  Keywords = "keywords",
+  Canonical = "canonical",
 }
 
-export type AdditionalTagsNameType = keyof typeof AdditionalTagsName;
+export type AdditionalTagsNameType = `${AdditionalTagsName}`;
 
 export type BasicTagsName = TagsNameType | AdditionalTagsNameType;
 

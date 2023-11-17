@@ -55,11 +55,11 @@ export const checkFiles = async ({
   countKeywords: boolean;
   countWordsInLast: boolean;
 }): Promise<CombinedPatterns> => {
-  const _fileContent = readFile(path.join(process.cwd(), input.replace(/\.\//g, ""), file));
+  const _fileContent = readFile(path.join(process.cwd(), input, file));
   const fileContent = _fileContent.replace(/\r?\n\s*/g, " ");
 
   const firstPatternsPromise = checkFileToBasicAnalyzer({
-    file: file.replace("\\", "/"),
+    file,
     fileContent,
     tags,
     domain,
@@ -68,7 +68,7 @@ export const checkFiles = async ({
   });
 
   const secondPatternsPromise = checkFileToAdvanceAnalyzer({
-    file: file.replace("\\", "/"),
+    file,
     fileContent,
     advancedTags,
   });

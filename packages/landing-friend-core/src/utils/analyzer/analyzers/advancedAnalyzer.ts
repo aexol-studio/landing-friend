@@ -2,11 +2,10 @@ import {
   AdvancedTagsNameType,
   AdvancedTagsPatterns,
   AdvancedTagsProps,
+  clearContent,
   forbiddenCharacters as _forbiddenCharacters,
   MetaNameTagsProps,
   MetaNameWithProps,
-  staticTags,
-  unicode,
 } from "@/index.js";
 
 interface MatchedArrayProps {
@@ -68,19 +67,10 @@ export const checkFileToAdvanceAnalyzer = async ({
 
       for (const match of matches) {
         for (const [metaName, value] of Object.entries(match)) {
-          let content: string | undefined;
+          let content: string | undefined = undefined;
           let status: string | undefined;
 
-          for (const staticTag of staticTags) {
-            const _content = value.content;
-            const staticTagRegex = new RegExp(`<${staticTag}.*?>|</${staticTag}>`, "g");
-            for (const [_unicode, replacement] of Object.entries(unicode)) {
-              const unicodeRegex = new RegExp(`${_unicode}`, "g");
-              content = _content.replace(unicodeRegex, replacement);
-            }
-
-            content = _content.replace(staticTagRegex, "");
-          }
+          content = clearContent(value.content);
 
           const forbiddenCharacters = _forbiddenCharacters.filter(
             char => content && content.includes(char)

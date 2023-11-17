@@ -19,8 +19,8 @@ export const generateMainSection = ({
   pathname: __pathname,
   domain,
 }: Props) => {
-  if (!countWordsInLast && tag === "lastSentence") return "";
-  if (!countKeywords && tag === "keywords") return "";
+  if (!countWordsInLast && tag === AdditionalTagsName.LastSentence) return "";
+  if (!countKeywords && tag === AdditionalTagsName.Keywords) return "";
   if (value.multipleTags) {
     return `<td><strong style="color: red">Warning! Number of multiple ${tag} on the page: ${value.quantity}</strong></td><td width="20%"><strong style="color: red">Check the code</strong></td>`;
   } else {
@@ -29,8 +29,8 @@ export const generateMainSection = ({
     const url = domain + pathname;
 
     const firstCell = `<td>
-  ${tag === "keywords" ? "Length of " : "List of "}
-  <strong>${tag === "lastSentence" ? "last sentence" : tag}</strong>: 
+  ${tag === AdditionalTagsName.Keywords ? "Length of " : "List of "}
+  <strong>${tag === AdditionalTagsName.LastSentence ? "last sentence" : tag}</strong>: 
   ${
     value.minLength && value.maxLength
       ? `<strong style="color:${
@@ -39,7 +39,7 @@ export const generateMainSection = ({
       : tag in AdditionalTagsName
       ? value.quantity > 0
         ? `<strong style="color: ${
-            tag !== "canonical" ? "black" : value.content === url ? "black" : "red"
+            tag !== AdditionalTagsName.Canonical ? "black" : value.content === url ? "black" : "red"
           }">
         ${
           typeof value.content === "string"
@@ -56,7 +56,10 @@ export const generateMainSection = ({
       : `<strong style="color:red">No characters detected/strong>`
   }
  ${
-   value.quantity > 0 && countKeywords && tag !== "keywords" && tag !== "canonical"
+   value.quantity > 0 &&
+   countKeywords &&
+   tag !== AdditionalTagsName.Keywords &&
+   tag !== AdditionalTagsName.Canonical
      ? value.keywordsIncluded && value.keywordsIncluded.length > 0
        ? ` | <strong style="color:green">Keywords included: ${value.keywordsIncluded.join(
            ", "

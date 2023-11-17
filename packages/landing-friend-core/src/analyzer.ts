@@ -3,20 +3,25 @@ import open, { apps } from "open";
 import path from "path";
 
 import {
+  AdditionalTagsName,
   AdvancedTagsName,
   AllTagsName,
   checkFiles,
   CombinedPatterns,
   CombineTagsWithReason,
   ConfigFile,
+  fileLocation,
+  FileName,
+  fileName,
   getHtmlFiles,
   matchedSetting,
   message,
+  pathName,
   prepareHTMLWithTables,
-  saveAnalyze,
+  saveFile,
 } from "@/index.js";
 
-export const websiteAnalyzer = async (config: ConfigFile, interval: NodeJS.Timer) => {
+export const websiteAnalyzer = async (config: ConfigFile, interval?: NodeJS.Timer) => {
   const { input, analyzer, advancedAnalyzer, excludedPage, sitemap, domain } = config;
   if (!analyzer) {
     return message("Define analyzer in config", "redBright");
@@ -38,8 +43,8 @@ export const websiteAnalyzer = async (config: ConfigFile, interval: NodeJS.Timer
     ) {
       combinedTagsPatternsArray.push(
         await checkFiles({
-          file,
-          input,
+          file: file.replace("\\", "/"),
+          input: input.replace(/\.\//g, ""),
           tags: analyzer,
           advancedTags: advancedAnalyzer,
           domain,
@@ -73,7 +78,8 @@ export const websiteAnalyzer = async (config: ConfigFile, interval: NodeJS.Timer
             quantity: value.quantity,
             content: value.content,
             forbiddenCharacters: value.forbiddenCharacters,
-            keywordsIncluded: tag !== "keywords" ? value.keywordsIncluded : undefined,
+            keywordsIncluded:
+              tag !== AdditionalTagsName.Keywords ? value.keywordsIncluded : undefined,
             multipleTags: value.multipleTags,
             tagAmount: tag in AdvancedTagsName ? value.tagAmount : undefined,
             listOfFoundMeta: value.listOfFoundMeta,
@@ -87,13 +93,10 @@ export const websiteAnalyzer = async (config: ConfigFile, interval: NodeJS.Timer
     });
   });
 
-  const location = "./SEO";
-  const fileName = (extension: ".json" | ".html") => `seo-analyze${extension}`;
-  const pathname = (extension: ".json" | ".html") => `${location}/${fileName(extension)}`;
   clearTimeout(interval);
   try {
-    saveAnalyze(pathname(".json"), JSON.stringify(cleanedTagsPatterns, null, 2));
-    saveAnalyze(pathname(".html"), htmlWithTablesAndCharts);
+    saveFile(pathName(FileName.analyze, ".json"), JSON.stringify(cleanedTagsPatterns, null, 2));
+    saveFile(pathName(FileName.analyze, ".html"), htmlWithTablesAndCharts);
     message(
       "Your website has been analyzed, JSON and html files have been generated in ./SEO",
       "green"
@@ -101,9 +104,11 @@ export const websiteAnalyzer = async (config: ConfigFile, interval: NodeJS.Timer
   } catch {
     message("Failed to create files", "red");
   } finally {
-    if (fs.existsSync(path.join(process.cwd(), location, fileName(".html")))) {
+    if (
+      fs.existsSync(path.join(process.cwd(), fileLocation, fileName(FileName.analyze, ".html")))
+    ) {
       try {
-        await open(path.join(process.cwd(), location, fileName(".html")), {
+        await open(path.join(process.cwd(), fileLocation, fileName(FileName.analyze, ".html")), {
           app: { name: apps.browser },
         });
         message("The analysis file has been opened in your browser.", "green");

@@ -2,6 +2,7 @@ import {
   ConfigFile,
   EXTENDED_ADVANCED_ANALYZER_GLOBAL_CONFIG_FILE,
   EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE,
+  EXTENDED_DUPLICATED_ANALYZER_CONFIG_FILE,
   EXTENDED_SITEMAP_GLOBAL_CONFIG_FILE,
   GLOBAL_CONFIG_FILE,
   initConfig,
@@ -16,6 +17,11 @@ export const configInit = async () => {
     message("Config already exists", "red");
     return;
   }
+
+  let extendResponseBySitemap: typeof EXTENDED_SITEMAP_GLOBAL_CONFIG_FILE = {};
+  let extendResponseByAnalyzer: typeof EXTENDED_ANALYZER_GLOBAL_CONFIG_FILE = {};
+  let extendResponseByAdvanceAnalyzer: typeof EXTENDED_ADVANCED_ANALYZER_GLOBAL_CONFIG_FILE = {};
+  let extendResponseByDuplicatedAnalyzer: typeof EXTENDED_DUPLICATED_ANALYZER_CONFIG_FILE = {};
 
   const directories: ConfigFile = await inquirer.prompt([
     {
@@ -49,7 +55,6 @@ export const configInit = async () => {
       default: GLOBAL_CONFIG_FILE.excludedPage,
     },
   ]);
-  let extendResponseBySitemap: Pick<ConfigFile, "sitemap"> = {};
 
   const { extendConfigBySitemap } = await inquirer.prompt<{
     extendConfigBySitemap: boolean;
@@ -89,9 +94,7 @@ export const configInit = async () => {
       },
     ]);
   }
-  let extendResponseByAnalyzer: Pick<ConfigFile, "analyzer"> = {};
 
-  let extendResponseByAdvanceAnalyzer: Pick<ConfigFile, "advancedAnalyzer"> = {};
   const { extendConfigByAnalyzer } = await inquirer.prompt<{
     extendConfigByAnalyzer: boolean;
   }>({
@@ -190,7 +193,7 @@ export const configInit = async () => {
     }>({
       type: "confirm",
       name: "extendAdvanceAnalyzer",
-      message: "Does you want to enable advance analyzer?",
+      message: "Do you want to enable advance analyzer?",
       default: true,
     });
 
@@ -211,11 +214,20 @@ export const configInit = async () => {
       ]);
     }
   }
+
+  extendResponseByDuplicatedAnalyzer = await inquirer.prompt({
+    type: "confirm",
+    name: "searchDuplicated",
+    message: "Do you want to search for duplicated pages and content?",
+    default: EXTENDED_DUPLICATED_ANALYZER_CONFIG_FILE.searchDuplicated,
+  });
+
   const completeConfig: ConfigFile = {
     ...directories,
     ...extendResponseBySitemap,
     ...extendResponseByAnalyzer,
     ...extendResponseByAdvanceAnalyzer,
+    ...extendResponseByDuplicatedAnalyzer,
   };
   await initConfig(completeConfig);
 };
