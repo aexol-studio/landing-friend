@@ -45,7 +45,7 @@
         "argsIgnorePattern": "^_"
       }
     ],
-    "linebreak-style": ["error", "unix"],
+    "linebreak-style": 0,
     "quotes": [2, "double", { "avoidEscape": true, "allowTemplateLiterals": true }],
     "semi": ["error", "always"]
   }

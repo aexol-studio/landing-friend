@@ -15,7 +15,8 @@ const arrayFilter = (firstArray: string[], secondArray: string[]) => {
 
 const checkContent = (tagName: BasicTagsName, fileContent: string) => {
   let regex: RegExp | undefined;
-  let matches: string[] | RegExpMatchArray | null = null;
+  let regexMatch: RegExpMatchArray | null = null;
+  let matches: string[] | undefined;
 
   if (tagName === "description") {
     regex = new RegExp(`<meta name="description" content="(.*?)"`, "g");
@@ -29,19 +30,20 @@ const checkContent = (tagName: BasicTagsName, fileContent: string) => {
     regex = new RegExp(`<${tagName}.*?>(.*?)</${tagName}>`, "g");
   }
 
-  matches = regex && fileContent.match(regex);
+  regexMatch = regex && fileContent.match(regex);
 
-  if (tagName === AdditionalTagsName.LastSentence && matches !== null) {
-    const lastMatch = matches[matches.length - 1];
-    matches = lastMatch !== undefined ? [lastMatch] : null;
+  if (tagName === AdditionalTagsName.LastSentence && regexMatch !== null) {
+    const lastMatch = regexMatch[regexMatch.length - 1];
+    regexMatch = lastMatch !== undefined ? [lastMatch] : null;
   }
 
-  if (matches) {
-    const updatedMatches = [...matches];
+  if (regexMatch) {
+    const updatedMatches = [...regexMatch];
     updatedMatches.forEach((match, index) => {
       const captureGroups = regex!.exec(match);
       if (captureGroups) {
-        updatedMatches[index] = clearContent(captureGroups[1])!;
+        const cleanedMatch = clearContent(captureGroups[1]);
+        updatedMatches[index] = cleanedMatch ? cleanedMatch : "";
       }
     });
 
@@ -72,7 +74,7 @@ export const checkFileToBasicAnalyzer = ({
   let updatedTagsPatterns = { ...tagsPatterns[file] };
   let mainKeywordsArray: string[] = [];
   let h1Keywords: string[] = [];
-  const url = domain + file.replace("index.html", "");
+  const url = (domain + file.replace("index.html", "")).trim();
 
   if (tags.keywords.count) {
     const keywordsMatch = checkContent(AdditionalTagsName.Keywords, fileContent);
@@ -129,7 +131,10 @@ export const checkFileToBasicAnalyzer = ({
               : undefined;
 
           if (h1Keywords.length > 0) {
-            if (tag in TagsName || tag === AdditionalTagsName.LastSentence) {
+            if (
+              Object.values(TagsName).includes(tag as TagsName) ||
+              tag === AdditionalTagsName.LastSentence
+            ) {
               missingKeywords = arrayFilter(h1Keywords, tagKeywords ? tagKeywords : []);
               toMuchKeywords = arrayFilter(tagKeywords ? tagKeywords : [], h1Keywords);
             }
@@ -173,7 +178,7 @@ export const checkFileToBasicAnalyzer = ({
                     ? "The canonical link must be the same as the URL."
                     : `Tag length should be between <strong>${value.minLength}</strong> and <strong>${value.maxLength}</strong>`,
                 quantity: match.length,
-                content: tag === AdditionalTagsName.Keywords ? tagKeywords : match,
+                content: tag === AdditionalTagsName.Keywords ? tagKeywords : match.trim(),
                 multipleTags: undefined,
                 keywordsIncluded: tagKeywords,
                 forbiddenCharacters:

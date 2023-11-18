@@ -21,7 +21,11 @@ export const generateMetaTagsSection = ({ value, tag }: Props) => {
               ? `<td colspan="2" style="color:${
                   !metaValue.status || metaValue.status === "OK" ? "black" : "red"
                 }">Content of <strong>${title}</strong>: ${
-                  metaValue.content ? metaValue.content : "No content detected"
+                  metaValue.content
+                    ? metaValue.content.includes("https")
+                      ? `<a href="${metaValue.content}" style="cursor:pointer">${metaValue.content}</a>`
+                      : metaValue.content
+                    : "No content detected"
                 } 
               ${metaValue.status ? ` | <strong>Url status: ${metaValue.status}</strong>` : ""}
               ${

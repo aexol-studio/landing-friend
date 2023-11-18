@@ -81,7 +81,9 @@ export const websiteAnalyzer = async (config: ConfigFile, interval?: NodeJS.Time
             keywordsIncluded:
               tag !== AdditionalTagsName.Keywords ? value.keywordsIncluded : undefined,
             multipleTags: value.multipleTags,
-            tagAmount: tag in AdvancedTagsName ? value.tagAmount : undefined,
+            tagAmount: Object.values(AdvancedTagsName).includes(tag as AdvancedTagsName)
+              ? value.tagAmount
+              : undefined,
             listOfFoundMeta: value.listOfFoundMeta,
             isError: value.isError,
             missingKeywords: value.missingKeywords,
@@ -92,7 +94,6 @@ export const websiteAnalyzer = async (config: ConfigFile, interval?: NodeJS.Time
       cleanedTagsPatterns[file] = tagArray;
     });
   });
-
   clearTimeout(interval);
   try {
     saveFile(pathName(FileName.analyze, ".json"), JSON.stringify(cleanedTagsPatterns, null, 2));

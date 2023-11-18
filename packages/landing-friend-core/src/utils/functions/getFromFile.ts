@@ -4,6 +4,7 @@ import path from "path";
 export const readFile = (filePath: string) => {
   return fs.readFileSync(filePath, "utf8");
 };
+
 export const getHtmlFiles = (base: string, deleteFileExtension: boolean) => {
   const baseWithoutDot = base.replace(/\.\//g, "");
 

@@ -87,7 +87,7 @@ export const checkFileToAdvanceAnalyzer = async ({
 
           const metaObject: MetaNameWithProps = {
             [metaName]: {
-              content,
+              content: content ? content.trim() : undefined,
               forbiddenCharacters,
               status: status ? status : undefined,
             } as MetaNameTagsProps,

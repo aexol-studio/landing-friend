@@ -1,4 +1,4 @@
-import { AdditionalTagsName, BasicTagsName, CombineTagsWithReason } from "@/index.js";
+import { AdditionalTagsName, BasicTagsName, CombineTagsWithReason, TagsName } from "@/index.js";
 
 interface Props {
   tag: BasicTagsName;
@@ -26,34 +26,29 @@ export const generateMainSection = ({
   } else {
     const _pathname = __pathname.replace("index.html", "");
     const pathname = trailingSlash ? _pathname : _pathname.replace(new RegExp("\\$", "g"), "");
-    const url = domain + pathname;
+    const url = (domain + pathname).trim();
 
     const firstCell = `<td>
   ${tag === AdditionalTagsName.Keywords ? "Length of " : "List of "}
   <strong>${tag === AdditionalTagsName.LastSentence ? "last sentence" : tag}</strong>: 
   ${
-    value.minLength && value.maxLength
-      ? `<strong style="color:${
-          value.quantity >= value.minLength && value.quantity <= value.maxLength ? "black" : "red"
-        }">${value.quantity}</strong>`
-      : tag in AdditionalTagsName
-      ? value.quantity > 0
-        ? `<strong style="color: ${
+    value.quantity > 0
+      ? tag in TagsName && value.minLength && value.maxLength
+        ? `<strong style="color:${
+            value.quantity >= value.minLength && value.quantity <= value.maxLength ? "black" : "red"
+          }">${value.quantity}</strong>`
+        : `<strong style="color: ${
             tag !== AdditionalTagsName.Canonical ? "black" : value.content === url ? "black" : "red"
-          }">
-        ${
-          typeof value.content === "string"
-            ? value.content.includes("https")
-              ? `<a href="${value.content}" style="cursor:pointer">${value.content}</a>${
-                  value.content !== url ? ` | Url not match` : ""
-                }`
-              : value.content
-            : value.content?.join(", ")
-        }
-        </strong>
-        `
-        : `<strong style="color:red">No words detected</strong>`
-      : `<strong style="color:red">No characters detected/strong>`
+          }">${
+            typeof value.content === "string"
+              ? value.content.includes("https")
+                ? `<a href="${value.content}" style="cursor:pointer">${value.content}</a>${
+                    value.content !== url ? ` | Url not match` : ""
+                  }`
+                : value.content
+              : value.content?.join(", ")
+          }</strong>`
+      : `<strong style="color:red">No characters detected</strong>`
   }
  ${
    value.quantity > 0 &&

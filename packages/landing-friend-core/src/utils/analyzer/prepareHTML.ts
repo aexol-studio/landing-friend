@@ -65,7 +65,11 @@ const generateTableRows = ({
           numberOfErrors++;
         }
 
-        if (tag in TagsName || (tag in AdditionalTagsName && tag !== "canonical")) {
+        if (
+          Object.values(TagsName).includes(tag as TagsName) ||
+          (Object.values(AdditionalTagsName).includes(tag as AdditionalTagsName) &&
+            tag !== "canonical")
+        ) {
           dataForMissingSection[tag as TagsToMissingSection] = {
             missingKeywords: missingKeywords ? missingKeywords : [],
             toMuchKeywords: toMuchKeywords ? toMuchKeywords : [],
@@ -88,7 +92,7 @@ const generateTableRows = ({
             const tag = _tag as AllTagsName;
             const value = _value as CombineTagsWithReason;
 
-            if (!(tag in AdvancedTagsName)) {
+            if (!Object.values(AdvancedTagsName).includes(tag as AdvancedTagsName)) {
               mainSection += `<tr>${generateMainSection({
                 countKeywords,
                 countWordsInLast,
