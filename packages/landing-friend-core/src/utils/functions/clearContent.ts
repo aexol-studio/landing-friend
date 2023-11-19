@@ -1,7 +1,6 @@
 import { staticTags, unicode } from "@/index.js";
 
-export const clearContent = (content: string | undefined) => {
-  if (!content) return;
+export const clearContent = (content: string) => {
   let finalContent = content;
 
   for (const staticTag of staticTags) {

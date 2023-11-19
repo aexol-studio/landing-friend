@@ -4,13 +4,13 @@ export enum DuplicatedSearchName {
   SameMetaDesc = "sameMetaDesc",
 }
 
-export interface DuplicatedContent {
-  content?: string;
-  numberOfDuplicates?: number;
-  duplicatesOnSite?: string[];
-}
-
 export type DuplicatedSearchNameTypes = `${DuplicatedSearchName}`;
+
+export interface DuplicatedContent {
+  content: string;
+  numberOfDuplicates: number;
+  duplicatesOnSite: string[];
+}
 
 export type DuplicatedContentWithName = {
   [name in DuplicatedSearchName]?: DuplicatedContent;

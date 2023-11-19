@@ -18,27 +18,36 @@ const checkContent = (fileContent: string): DuplicatedContentWithName => {
   let sameTitle: DuplicatedContent | undefined;
   let sameMetaDesc: DuplicatedContent | undefined;
 
-  const fullContentRegex = new RegExp(`<html.*?>(.*?)</html>`, "g");
+  const fullContentRegex = new RegExp(`<body.*?>(.*?)</body>`, "g");
   const titleRegex = new RegExp(`<title.*?>(.*?)</title.*?>`, "g");
-  const descRegex = new RegExp(`<meta name="description" content="(.*?)" />`, "g");
+  const descRegex = new RegExp(`<meta name="description" content="(.*?)"`, "g");
 
-  if (fileContent.match(fullContentRegex)) {
-    // const match = fileContent.match(fullContentRegex)?.[0];
-    samePage = {
-      content: undefined,
-    };
+  if (fileContent.match(fullContentRegex)?.[0]) {
+    const match = fileContent.match(fullContentRegex)?.[0];
+    if (match)
+      samePage = {
+        content: match,
+        duplicatesOnSite: [],
+        numberOfDuplicates: 0,
+      };
   }
   if (fileContent.match(titleRegex)) {
     const match = titleRegex.exec(fileContent)?.[1];
-    sameTitle = {
-      content: clearContent(match),
-    };
+    if (match)
+      sameTitle = {
+        content: clearContent(match),
+        duplicatesOnSite: [],
+        numberOfDuplicates: 0,
+      };
   }
   if (fileContent.match(descRegex)) {
-    const match = fileContent.match(descRegex)?.[1];
-    sameMetaDesc = {
-      content: clearContent(match),
-    };
+    const match = descRegex.exec(fileContent)?.[1];
+    if (match)
+      sameMetaDesc = {
+        content: clearContent(match),
+        duplicatesOnSite: [],
+        numberOfDuplicates: 0,
+      };
   }
 
   return { sameMetaDesc, samePage, sameTitle };

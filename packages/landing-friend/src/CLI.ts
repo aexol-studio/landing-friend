@@ -64,34 +64,6 @@ yargs(hideBin(process.argv))
   //!!!!!!!
   // USE IT INSTEAD OF BELOW COMMAND IF U WANT CONSOLE.LOG SOMETHING
   //
-  .command(
-    "analyze",
-    "Analyze your landing page",
-    {
-      help: {
-        describe:
-          "Analysis of your website through defined values in the config generates HTML and JSON files.",
-      },
-    },
-    async () => {
-      console.clear();
-      const config = readConfig("landing-friend-config.ts", "generate");
-      if (!config) {
-        message("Config not found", "red");
-        return;
-      }
-      try {
-        message("Analyzing your page...", "yellow");
-        await websiteAnalyzer(config);
-      } catch (e) {
-        const error = e as Error;
-        message(error.message, "red");
-        return;
-      } finally {
-        process.exit();
-      }
-    }
-  )
   // .command(
   //   "analyze",
   //   "Analyze your landing page",
@@ -105,26 +77,12 @@ yargs(hideBin(process.argv))
   //     console.clear();
   //     const config = readConfig("landing-friend-config.ts", "generate");
   //     if (!config) {
-  //       message(
-  //         "No config detected. Please create one using init command or create it manually",
-  //         "red"
-  //       );
+  //       message("Config not found", "red");
   //       return;
   //     }
-
-  //     const char = ".";
-  //     const maxChar = 3;
-  //     let progress = "";
-  //     const interval = setInterval(() => {
-  //       if (progress.length < maxChar) {
-  //         progress += char;
-  //         console.clear();
-  //         message(`Analyzing your page${progress}`, "yellow");
-  //       } else progress = "";
-  //     }, 500);
-
   //     try {
-  //       await websiteAnalyzer(config, interval);
+  //       message("Analyzing your page...", "yellow");
+  //       await websiteAnalyzer(config);
   //     } catch (e) {
   //       const error = e as Error;
   //       message(error.message, "red");
@@ -134,6 +92,48 @@ yargs(hideBin(process.argv))
   //     }
   //   }
   // )
+  .command(
+    "analyze",
+    "Analyze your landing page",
+    {
+      help: {
+        describe:
+          "Analysis of your website through defined values in the config generates HTML and JSON files.",
+      },
+    },
+    async () => {
+      console.clear();
+      const config = readConfig("landing-friend-config.ts", "generate");
+      if (!config) {
+        message(
+          "No config detected. Please create one using init command or create it manually",
+          "red"
+        );
+        return;
+      }
+
+      const char = ".";
+      const maxChar = 3;
+      let progress = "";
+      const interval = setInterval(() => {
+        if (progress.length < maxChar) {
+          progress += char;
+          console.clear();
+          message(`Analyzing your page${progress}`, "yellow");
+        } else progress = "";
+      }, 500);
+
+      try {
+        await websiteAnalyzer(config, interval);
+      } catch (e) {
+        const error = e as Error;
+        message(error.message, "red");
+        return;
+      } finally {
+        process.exit();
+      }
+    }
+  )
   //!!!!!!!
   // USE IT INSTEAD OF BELOW COMMAND IF U WANT CONSOLE.LOG SOMETHING
   //

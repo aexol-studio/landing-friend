@@ -31,16 +31,7 @@ export const websiteAnalyzer = async (config: ConfigFile, interval?: NodeJS.Time
   const combinedTagsPatternsArray: CombinedPatterns[] = [];
 
   for (const file of allHtmlFiles) {
-    if (
-      !matchedSetting(
-        file
-          .replace("\\", "/")
-          .replace(/\.html|\.php/g, "")
-          .replace(/index/g, "")
-          .replace(/\/$/g, ""),
-        excludedPage
-      )
-    ) {
+    if (!matchedSetting(file, excludedPage)) {
       combinedTagsPatternsArray.push(
         await checkFiles({
           file: file.replace("\\", "/"),
@@ -94,7 +85,9 @@ export const websiteAnalyzer = async (config: ConfigFile, interval?: NodeJS.Time
       cleanedTagsPatterns[file] = tagArray;
     });
   });
+
   clearTimeout(interval);
+
   try {
     saveFile(pathName(FileName.analyze, ".json"), JSON.stringify(cleanedTagsPatterns, null, 2));
     saveFile(pathName(FileName.analyze, ".html"), htmlWithTablesAndCharts);

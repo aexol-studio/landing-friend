@@ -1,5 +1,11 @@
 export const matchedSetting = (file: string, paths: string[]) => {
-  file = file.endsWith("/") ? file : file + "/";
+  let newFile = file
+    .replace("\\", "/")
+    .replace(/\.html|\.php/g, "")
+    .replace(/index/g, "")
+    .replace(/\/$/g, "");
+
+  newFile = newFile.endsWith("/") ? newFile : newFile + "/";
   if (paths.length > 0) {
     if (
       paths.find(path => {
@@ -8,7 +14,7 @@ export const matchedSetting = (file: string, paths: string[]) => {
           .replace(/^\.\//g, "^/")
           .replace("*/", "/")
           .replace("/*", "/");
-        return file.match(new RegExp(regexPattern, "g")) !== null;
+        return newFile.match(new RegExp(regexPattern, "g")) !== null;
       })
     ) {
       return true;

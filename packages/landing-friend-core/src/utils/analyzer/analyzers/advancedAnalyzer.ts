@@ -2,47 +2,12 @@ import {
   AdvancedTagsNameType,
   AdvancedTagsPatterns,
   AdvancedTagsProps,
+  checkMetaTags,
   clearContent,
   forbiddenCharacters as _forbiddenCharacters,
   MetaNameTagsProps,
   MetaNameWithProps,
 } from "@/index.js";
-
-interface MatchedArrayProps {
-  content: string;
-}
-
-const matchedTags = (advancedTags: AdvancedTagsNameType, fileContent: string) => {
-  let regex: RegExp | undefined;
-  const matchedArray: { [tagName: string]: MatchedArrayProps }[] = [];
-
-  if (advancedTags === "og") {
-    regex = new RegExp(`<meta property="og:(.*?)" content="(.*?)".*?/>`, "gs");
-  } else if (advancedTags === "twitter") {
-    regex = new RegExp(`<meta name="twitter:(.*?)" content="(.*?)".*?/>`, "gs");
-  }
-
-  if (regex) {
-    const matches = fileContent.match(regex);
-    if (matches) {
-      matches.forEach(match => {
-        let tagObject: { [x: string]: { content: string } };
-        const captureGroups = regex!.exec(match);
-        if (captureGroups) {
-          const tagName = captureGroups[1];
-          const content = captureGroups[2];
-          tagObject = { [tagName]: { content } };
-
-          matchedArray.push(tagObject);
-
-          regex!.lastIndex = 0;
-        }
-      });
-    }
-  }
-
-  return matchedArray;
-};
 
 export const checkFileToAdvanceAnalyzer = async ({
   file,
@@ -60,7 +25,7 @@ export const checkFileToAdvanceAnalyzer = async ({
   for (const [_tag, value] of Object.entries(advancedTags)) {
     if (!value) continue;
     const tag = _tag as AdvancedTagsNameType;
-    const matches = matchedTags(tag, fileContent);
+    const matches = checkMetaTags(tag, fileContent);
 
     if (matches) {
       let listOfFoundMeta: MetaNameWithProps = {};
@@ -75,7 +40,7 @@ export const checkFileToAdvanceAnalyzer = async ({
           const forbiddenCharacters = _forbiddenCharacters.filter(
             char => content && content.includes(char)
           );
-          if (content && content.includes("https")) {
+          if (content.includes("https")) {
             status = await fetch(content)
               .then(response => response.statusText)
               .catch(err => {
@@ -87,7 +52,7 @@ export const checkFileToAdvanceAnalyzer = async ({
 
           const metaObject: MetaNameWithProps = {
             [metaName]: {
-              content: content ? content.trim() : undefined,
+              content: content.trim(),
               forbiddenCharacters,
               status: status ? status : undefined,
             } as MetaNameTagsProps,
