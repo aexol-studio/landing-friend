@@ -17,17 +17,19 @@ import {
   matchedSetting,
   message,
   pathName,
+  prepareDuplicatedHtml,
   saveFile,
 } from "@/index.js";
 
 export const searchDuplicated = async (config: ConfigFile, interval?: NodeJS.Timer) => {
-  const { input, searchDuplicated, excludedPage } = config;
+  const { input, domain, searchDuplicated, excludedPage } = config;
 
   if (!searchDuplicated) {
     return message("Define analyzer in config", "redBright");
   }
 
   let contentArray: FileWithDuplicateContent[] = [];
+  const contentArrayWithDuplication: FileWithDuplicateContent[] = [];
   const dataToJson: FileWithDuplicateContent = {};
 
   const allHtmlFiles = getHtmlFiles(input, false);
@@ -38,7 +40,6 @@ export const searchDuplicated = async (config: ConfigFile, interval?: NodeJS.Tim
         file: file.replace("\\", "/"),
         input: input.replace(/\.\//g, ""),
       });
-
       if (contentArray.length > 0) {
         contentArray = findAndStoreDuplicates(fileWithContent, contentArray, file);
       } else {
@@ -75,11 +76,21 @@ export const searchDuplicated = async (config: ConfigFile, interval?: NodeJS.Tim
       delete dataToJson[key];
     }
   });
+  Object.entries(dataToJson).forEach(([key, value]) => {
+    const dataToArray: FileWithDuplicateContent = {};
+    dataToArray[key] = value;
+    contentArrayWithDuplication.push(dataToArray);
+  });
+
+  const htmlWithTablesAndCharts = prepareDuplicatedHtml({
+    dataArray: contentArrayWithDuplication,
+    domain: domain,
+  });
 
   clearTimeout(interval);
   try {
     saveFile(pathName(FileName.duplicated, ".json"), JSON.stringify(dataToJson, null, 2));
-    // saveFile(pathName(FileName.duplicated, ".html"), htmlWithTablesAndCharts);
+    saveFile(pathName(FileName.duplicated, ".html"), htmlWithTablesAndCharts);
     message(
       "Your website has been analyzed, JSON and html files have been generated in ./SEO",
       "green"
