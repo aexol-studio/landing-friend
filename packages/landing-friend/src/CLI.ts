@@ -61,37 +61,6 @@ yargs(hideBin(process.argv))
       }
     }
   )
-  //!!!!!!!
-  // USE IT INSTEAD OF BELOW COMMAND IF U WANT CONSOLE.LOG SOMETHING
-  //
-  // .command(
-  //   "analyze",
-  //   "Analyze your landing page",
-  //   {
-  //     help: {
-  //       describe:
-  //         "Analysis of your website through defined values in the config generates HTML and JSON files.",
-  //     },
-  //   },
-  //   async () => {
-  //     console.clear();
-  //     const config = readConfig("landing-friend-config.ts", "generate");
-  //     if (!config) {
-  //       message("Config not found", "red");
-  //       return;
-  //     }
-  //     try {
-  //       message("Analyzing your page...", "yellow");
-  //       await websiteAnalyzer(config);
-  //     } catch (e) {
-  //       const error = e as Error;
-  //       message(error.message, "red");
-  //       return;
-  //     } finally {
-  //       process.exit();
-  //     }
-  //   }
-  // )
   .command(
     "analyze",
     "Analyze your landing page",
@@ -134,40 +103,6 @@ yargs(hideBin(process.argv))
       }
     }
   )
-  //!!!!!!!
-  // USE IT INSTEAD OF BELOW COMMAND IF U WANT CONSOLE.LOG SOMETHING
-  //
-  // .command(
-  //   "duplicated",
-  //   "Find duplicated content",
-  //   {
-  //     help: {
-  //       describe: "Search the out file to find duplicated content on your site.",
-  //     },
-  //   },
-  //   async () => {
-  //     console.clear();
-  //     const config = readConfig("landing-friend-config.ts", "generate");
-  //     if (!config) {
-  //       message(
-  //         "No config detected. Please create one using init command or create it manually",
-  //         "red"
-  //       );
-  //       return;
-  //     }
-
-  //     try {
-  //       message("Searching for duplicates...", "yellow");
-  //       await searchDuplicated(config);
-  //     } catch (e) {
-  //       const error = e as Error;
-  //       message(error.message, "red");
-  //       return;
-  //     } finally {
-  //       process.exit();
-  //     }
-  //   }
-  // )
   .command(
     "duplicated",
     "Find duplicated content",
